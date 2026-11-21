@@ -1,0 +1,4587 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="cyber">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#060918" id="meta-theme-color" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="description" content="Serpente Arena — Mundo Infinito sem bordas, 7 temas (Nokia 3310 LCD, Caderno e Abismo), bots até Insano, obstáculos e 6 itens especiais." />
+  <title>Serpente Arena — Mundo Infinito Sem Bordas &amp; PWA</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <style>
+    /* =========================================================================
+       1. SISTEMA DE CORES & 7 TEMAS DINÂMICOS (100% AUTOCONTIDO, ZERO DEPENDÊNCIAS)
+       ========================================================================= */
+    :root, [data-theme="cyber"] {
+      --bg-page: #060918;
+      --panel-bg: rgba(10, 16, 38, 0.95);
+      --panel-soft: rgba(20, 32, 70, 0.9);
+      --panel-border: rgba(34, 211, 238, 0.42);
+      --text-main: #f0f9ff;
+      --text-muted: #94a3b8;
+      --accent: #22d3ee;
+      --accent-text: #04131c;
+      --accent-2: #f43f5e;
+      --radius-card: 24px;
+      --radius-btn: 14px;
+    }
+
+    [data-theme="nokia"] {
+      --bg-page: #8bac0f;
+      --panel-bg: #9bbc0f;
+      --panel-soft: #8bac0f;
+      --panel-border: #0f380f;
+      --text-main: #0f380f;
+      --text-muted: #306230;
+      --accent: #0f380f;
+      --accent-text: #9bbc0f;
+      --accent-2: #306230;
+      --radius-card: 8px;
+      --radius-btn: 6px;
+    }
+
+    [data-theme="notebook"] {
+      --bg-page: #f8fafc;
+      --panel-bg: rgba(255, 255, 255, 0.97);
+      --panel-soft: rgba(241, 245, 249, 0.95);
+      --panel-border: #1d4ed8;
+      --text-main: #1e3a8a;
+      --text-muted: #475569;
+      --accent: #1d4ed8;
+      --accent-text: #ffffff;
+      --accent-2: #dc2626;
+      --radius-card: 18px;
+      --radius-btn: 12px;
+    }
+
+    [data-theme="abyss"] {
+      --bg-page: #020c1b;
+      --panel-bg: rgba(6, 22, 46, 0.95);
+      --panel-soft: rgba(11, 36, 72, 0.9);
+      --panel-border: rgba(45, 212, 191, 0.45);
+      --text-main: #ccfbf1;
+      --text-muted: #5eead4;
+      --accent: #2dd4bf;
+      --accent-text: #02141a;
+      --accent-2: #38bdf8;
+    }
+
+    [data-theme="jungle"] {
+      --bg-page: #0c1f13;
+      --panel-bg: rgba(15, 39, 23, 0.95);
+      --panel-soft: rgba(26, 62, 38, 0.9);
+      --panel-border: rgba(163, 230, 53, 0.42);
+      --text-main: #f7fee7;
+      --text-muted: #bef264;
+      --accent: #a3e635;
+      --accent-text: #102408;
+      --accent-2: #fb923c;
+    }
+
+    [data-theme="magma"] {
+      --bg-page: #180807;
+      --panel-bg: rgba(36, 12, 10, 0.95);
+      --panel-soft: rgba(62, 20, 15, 0.9);
+      --panel-border: rgba(251, 146, 60, 0.45);
+      --text-main: #fff7ed;
+      --text-muted: #fdba74;
+      --accent: #fb923c;
+      --accent-text: #220904;
+      --accent-2: #ef4444;
+    }
+
+    [data-theme="retro"] {
+      --bg-page: #1b2219;
+      --panel-bg: rgba(31, 41, 29, 0.96);
+      --panel-soft: rgba(45, 58, 42, 0.92);
+      --panel-border: rgba(163, 217, 119, 0.5);
+      --text-main: #e4f5d4;
+      --text-muted: #9ec482;
+      --accent: #a3d977;
+      --accent-text: #141c12;
+      --accent-2: #facc15;
+    }
+
+    [data-theme="nokia"] body,
+    [data-theme="nokia"] button,
+    [data-theme="nokia"] input {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      letter-spacing: -0.02em;
+    }
+
+    [data-theme="nokia"] .glass-box,
+    [data-theme="nokia"] .soft-box {
+      border-width: 2px;
+      border-color: #0f380f;
+      box-shadow: 3px 3px 0 rgba(15, 56, 15, 0.35);
+    }
+
+    /* Matriz sutil de pixels LCD apenas no tema Nokia 3310 */
+    [data-theme="nokia"]::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 15;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(15, 56, 15, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15, 56, 15, 0.06) 1px, transparent 1px);
+      background-size: 4px 4px;
+    }
+
+    [data-theme="notebook"] .glass-box,
+    [data-theme="notebook"] .soft-box {
+      border-width: 2px;
+      border-color: #1d4ed8;
+      box-shadow: 3px 3px 0 rgba(29, 78, 216, 0.16);
+    }
+
+    /* =========================================================================
+       2. RESET & LAYOUT RESPONSIVO MOBILE-FIRST
+       ========================================================================= */
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: var(--bg-page);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .hidden { display: none !important; }
+    .font-arena { font-weight: 900; letter-spacing: 0.03em; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+
+    /* iOS Safari bloqueia digitação em inputs com user-select:none */
+    input, textarea {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    button, input {
+      touch-action: manipulation;
+      color: inherit;
+      font-family: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      background: transparent;
+      border: none;
+    }
+
+    .glass-box {
+      background: var(--panel-bg);
+      border: 1.5px solid var(--panel-border);
+      border-radius: var(--radius-card);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.38);
+    }
+
+    .soft-box {
+      background: var(--panel-soft);
+      border: 1.5px solid var(--panel-border);
+      border-radius: var(--radius-btn);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--accent-text);
+      border-radius: var(--radius-btn);
+      font-weight: 900;
+      transition: transform 0.08s ease, filter 0.1s ease;
+    }
+
+    .btn-primary:active { transform: scale(0.96); }
+
+    #arena-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+      touch-action: none;
+    }
+
+    /* Lobby */
+    #lobby-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom));
+      pointer-events: none;
+    }
+
+    .lobby-shell {
+      width: 100%;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    .lobby-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      flex-shrink: 0;
+    }
+
+    .lobby-card {
+      width: 100%;
+      max-width: 560px;
+      margin: auto;
+      max-height: 82dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      pointer-events: auto;
+    }
+
+    .stage-header {
+      padding: 12px 14px;
+      border-bottom: 1.5px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .stage-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    #skin-preview-canvas {
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1.5px solid var(--panel-border);
+      flex-shrink: 0;
+    }
+
+    .tab-nav {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      padding: 4px;
+      margin: 10px 12px 0;
+      flex-shrink: 0;
+    }
+
+    .tab-btn {
+      padding: 8px 4px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 800;
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+
+    .tab-body {
+      padding: 12px 14px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-lbl {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .grid-7 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    @media (min-width: 460px) {
+      .grid-7 { grid-template-columns: repeat(7, 1fr); }
+    }
+    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+
+    .opt-card {
+      padding: 8px 4px;
+      text-align: center;
+      transition: transform 0.08s ease, border-color 0.12s ease;
+    }
+    .opt-card:active { transform: scale(0.95); }
+
+    .lobby-footer {
+      padding: 10px 14px;
+      border-top: 1.5px solid var(--panel-border);
+      flex-shrink: 0;
+    }
+
+    #btn-start-arena {
+      width: 100%;
+      padding: 14px;
+      font-size: 15px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    /* HUD In-Game */
+    #hud-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: max(10px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+    }
+
+    .hud-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .hud-board {
+      padding: 8px 11px;
+      border-radius: 18px;
+      min-width: 185px;
+      max-width: 255px;
+      pointer-events: auto;
+    }
+
+    .hud-board-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-bottom: 5px;
+      margin-bottom: 5px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .hud-bottom {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    #btn-turbo {
+      pointer-events: auto;
+      width: 82px;
+      height: 82px;
+      border-radius: 999px;
+      border: 2.5px solid rgba(255, 255, 255, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+    }
+
+    .turbo-btn-active {
+      transform: scale(0.91);
+      filter: brightness(1.22);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(0, 0, 0, 0.78);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 440px;
+      padding: 20px;
+      max-height: 88dvh;
+      overflow-y: auto;
+    }
+
+    @keyframes toastSlide {
+      0% { opacity: 0; transform: translate(-50%, -10px) scale(0.94); }
+      15% { opacity: 1; transform: translate(-50%, 0) scale(1.02); }
+      85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -8px) scale(0.96); }
+    }
+
+    .toast-banner {
+      position: fixed;
+      bottom: calc(max(12px, env(safe-area-inset-bottom)) + 104px);
+      left: 50%;
+      z-index: 60;
+      padding: 7px 15px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      max-width: 88vw;
+      text-align: center;
+      animation: toastSlide 2.1s ease forwards;
+      pointer-events: none;
+    }
+
+    /* Botões do HUD com área de toque adequada (>= 40px) */
+    .hud-icon-btn {
+      min-width: 40px;
+      height: 40px;
+      padding: 0 8px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Avatar do jogador */
+    .avatar-img,
+    .avatar-emoji {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      flex-shrink: 0;
+      object-fit: cover;
+      background: var(--panel-soft);
+      border: 1.5px solid var(--panel-border);
+      line-height: 1;
+      vertical-align: middle;
+    }
+
+    .avatar-preset {
+      aspect-ratio: 1;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    #profile-camera-video {
+      width: 100%;
+      max-width: 260px;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 18px;
+      transform: scaleX(-1);
+      background: #000;
+    }
+
+    @media (max-width: 420px) {
+      .hud-board { min-width: 150px; max-width: 200px; padding: 6px 9px; }
+      #minimap-canvas { width: 76px; height: 76px; }
+      #btn-turbo { width: 74px; height: 74px; }
+    }
+
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 999px; }
+  </style>
+</head>
+<body>
+
+  <!-- Canvas Fullscreen -->
+  <canvas id="arena-canvas"></canvas>
+
+  <!-- =========================================================================
+       TELA 1: LOBBY MOBILE-FIRST EM 3 ABAS LIMPAS + PALCO VIVO
+       ========================================================================= -->
+  <div id="lobby-screen">
+    <header class="lobby-shell lobby-header">
+      <div class="brand-row">
+        <div class="brand-badge btn-primary">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+            <path d="M4 17c3 0 4-6 8-6s5 6 8 6" />
+            <circle cx="20" cy="17" r="2" fill="currentColor" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-arena" style="margin:0; font-size:15px; text-transform:uppercase; line-height:1.1;">Serpente Arena</h1>
+          <span style="font-size:10px; color:var(--text-muted);">Mundo Infinito Sem Bordas • 7 Temas • Bots até Insano</span>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button type="button" id="btn-open-profile" class="glass-box" style="padding:3px; border-radius:999px; display:flex; align-items:center;" title="Meu Perfil" aria-label="Meu Perfil">
+          <span id="lobby-avatar-slot" style="display:flex; pointer-events:none;"></span>
+        </button>
+        <button type="button" id="btn-fullscreen-toggle" class="glass-box" style="padding:8px 10px; border-radius:12px; font-size:13px; font-weight:800;" title="Tela Cheia" aria-label="Tela Cheia">⛶</button>
+        <button type="button" id="btn-sound-toggle" class="glass-box" style="padding:8px 10px; border-radius:12px; font-size:13px; font-weight:800;" title="Alternar Som" aria-label="Alternar Som">🔊</button>
+        <button type="button" id="btn-open-tutorial" class="glass-box" style="padding:8px 12px; border-radius:12px; font-size:12px; font-weight:800; display:flex; align-items:center; gap:4px;">
+          <span>?</span>
+          <span>Guia</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="glass-box lobby-card">
+      <!-- Palco Vivo -->
+      <div class="stage-header">
+        <div class="stage-left">
+          <canvas id="skin-preview-canvas" width="108" height="48"></canvas>
+          <div style="min-width:0;">
+            <div id="selected-skin-title" class="font-arena" style="font-size:13px; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              ⚡ Víbora Cyber
+            </div>
+            <div id="lobby-summary-pill" style="font-size:11px; font-weight:700; opacity:0.88; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              ♾️ Mapa Infinito (Rec. 100) · Médio · Normal
+            </div>
+          </div>
+        </div>
+        <button type="button" id="btn-quick-visual" class="soft-box" style="padding:7px 10px; font-size:11px; font-weight:800; flex-shrink:0;">
+          🎨 Visual
+        </button>
+      </div>
+
+      <!-- 3 Abas -->
+      <nav class="soft-box tab-nav" role="tablist">
+        <button type="button" data-tab-btn="play" class="tab-btn">🎮 Jogar</button>
+        <button type="button" data-tab-btn="visual" class="tab-btn">🎨 Visual</button>
+        <button type="button" data-tab-btn="room" class="tab-btn">🌐 Sala</button>
+      </nav>
+
+      <div class="tab-body custom-scroll">
+
+        <!-- ABA 1: 🎮 JOGAR -->
+        <section id="tab-panel-play" style="display:flex; flex-direction:column; gap:11px;">
+          <div>
+            <span class="section-lbl">Atalhos de 1 Toque</span>
+            <div class="grid-4">
+              <button type="button" data-preset="endless" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">♾️ Infinito</div>
+                <div style="font-size:9px; color:var(--text-muted); margin-top:2px;">Sem Bordas</div>
+              </button>
+              <button type="button" data-preset="nokia" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">📟 Nokia</div>
+                <div style="font-size:9px; color:var(--text-muted); margin-top:2px;">LCD 3310</div>
+              </button>
+              <button type="button" data-preset="chaos6" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">🔥 Caos 6P</div>
+                <div style="font-size:9px; color:var(--text-muted); margin-top:2px;">Insano</div>
+              </button>
+              <button type="button" data-preset="duo2v2" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">🤝 2v2</div>
+                <div style="font-size:9px; color:var(--text-muted); margin-top:2px;">Em Dupla</div>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <span class="section-lbl">Modo &amp; Jogadores</span>
+            <div class="grid-3">
+              <button type="button" data-format-btn="endless" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">♾️ Infinito</div>
+                <div style="font-size:9px; color:var(--text-muted);">Mapa Sem Bordas</div>
+              </button>
+              <button type="button" data-format-btn="solo-2" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">Solo 2P</div>
+                <div style="font-size:9px; color:var(--text-muted);">Arena 1v1</div>
+              </button>
+              <button type="button" data-format-btn="solo-4" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">Solo 4P</div>
+                <div style="font-size:9px; color:var(--text-muted);">Arena +3 Bots</div>
+              </button>
+              <button type="button" data-format-btn="solo-6" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">Solo 6P</div>
+                <div style="font-size:9px; color:var(--text-muted);">Arena +5 Bots</div>
+              </button>
+              <button type="button" data-format-btn="2v2" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">Dupla 2v2</div>
+                <div style="font-size:9px; color:var(--text-muted);">Aliado + Rivais</div>
+              </button>
+              <button type="button" data-format-btn="3v3" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">Equipe 3v3</div>
+                <div style="font-size:9px; color:var(--text-muted);">Esquadrões</div>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <span class="section-lbl">Nível dos Bots</span>
+            <div class="grid-4">
+              <button type="button" data-diff-btn="easy" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">Fácil</div>
+              </button>
+              <button type="button" data-diff-btn="medium" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">Médio</div>
+              </button>
+              <button type="button" data-diff-btn="hard" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">Difícil</div>
+              </button>
+              <button type="button" data-diff-btn="insane" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">🔥 Insano</div>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <span class="section-lbl">Obstáculos</span>
+            <div class="grid-3">
+              <button type="button" data-haz-btn="none" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">Limpa</div>
+              </button>
+              <button type="button" data-haz-btn="normal" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">❄️ Normal</div>
+              </button>
+              <button type="button" data-haz-btn="chaos" class="soft-box opt-card">
+                <div style="font-size:11px; font-weight:900;">⚡ Caótica</div>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ABA 2: 🎨 VISUAL -->
+        <section id="tab-panel-visual" class="hidden" style="display:flex; flex-direction:column; gap:12px;">
+          <div>
+            <span class="section-lbl">Tema Visual (7 Estilos)</span>
+            <div class="grid-7">
+              <button type="button" data-theme-btn="cyber" class="soft-box opt-card">
+                <div style="font-size:15px; line-height:1;">⚡</div>
+                <div style="font-size:9px; font-weight:900; margin-top:4px;">Cyber</div>
+              </button>
+              <button type="button" data-theme-btn="nokia" class="soft-box opt-card">
+                <div style="font-size:15px; line-height:1;">📟</div>
+                <div style="font-size:9px; font-weight:900; margin-top:4px;">Nokia</div>
+              </button>
+              <button type="button" data-theme-btn="notebook" class="soft-box opt-card">
+                <div style="font-size:15px; line-height:1;">📝</div>
+                <div style="font-size:9px; font-weight:900; margin-top:4px;">Caderno</div>
+              </button>
+              <button type="button" data-theme-btn="abyss" class="soft-box opt-card">
+                <div style="font-size:15px; line-height:1;">🌌</div>
+                <div style="font-size:9px; font-weight:900; margin-top:4px;">Abismo</div>
+              </button>
+              <button type="button" data-theme-btn="jungle" class="soft-box opt-card">
+                <div style="font-size:15px; line-height:1;">🌿</div>
+                <div style="font-size:9px; font-weight:900; margin-top:4px;">Selva</div>
+              </button>
+              <button type="button" data-theme-btn="magma" class="soft-box opt-card">
+                <div style="font-size:15px; line-height:1;">🌋</div>
+                <div style="font-size:9px; font-weight:900; margin-top:4px;">Vulcão</div>
+              </button>
+              <button type="button" data-theme-btn="retro" class="soft-box opt-card">
+                <div style="font-size:15px; line-height:1;">👾</div>
+                <div style="font-size:9px; font-weight:900; margin-top:4px;">Retrô</div>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <span class="section-lbl">Espécie da Serpente (5 Formas)</span>
+            <div id="skin-selector-grid" class="grid-5"></div>
+          </div>
+
+          <div>
+            <span class="section-lbl">Cor Principal</span>
+            <div id="color-swatch-row" class="soft-box" style="padding:10px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px;"></div>
+          </div>
+        </section>
+
+        <!-- ABA 3: 🌐 SALA -->
+        <section id="tab-panel-room" class="hidden" style="display:flex; flex-direction:column; gap:10px;">
+          <div class="soft-box" style="padding:11px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+            <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+              <span id="room-avatar-slot" style="display:flex;"></span>
+              <div style="min-width:0;">
+                <span class="section-lbl" style="margin:0;">Seu Perfil</span>
+                <div id="room-player-name" class="font-arena" style="font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Você</div>
+                <button type="button" id="btn-edit-profile" style="padding:2px 0; font-size:11px; font-weight:800; color:var(--accent); text-decoration:underline;">Editar perfil</button>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <span class="section-lbl" style="margin:0;">Status</span>
+              <span id="room-peers-badge" style="display:inline-block; margin-top:4px; font-size:11px; padding:3px 9px; border-radius:8px; background:rgba(16,185,129,0.2); color:#34d399; font-weight:900;">1/6 na sala</span>
+            </div>
+          </div>
+
+          <div class="soft-box" style="padding:11px 12px; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <div>
+                <span class="section-lbl" style="margin:0;">Código da Sala</span>
+                <span id="lobby-room-code" class="font-mono" style="font-size:18px; font-weight:900; letter-spacing:0.15em; color:var(--accent);">SNK6</span>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button type="button" id="btn-qr-toggle" class="glass-box" style="padding:8px 11px; border-radius:12px; font-size:11px; font-weight:800;">QR Code</button>
+                <button type="button" id="btn-copy-invite" class="glass-box" style="padding:8px 11px; border-radius:12px; font-size:11px; font-weight:800;">
+                  <span id="copy-invite-lbl">🔗 Link</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="qr-panel" class="hidden" style="padding-top:10px; border-top:1px solid var(--panel-border); display:flex; flex-direction:column; align-items:center; gap:6px;">
+              <div id="qr-svg-slot" style="background:#ffffff; padding:10px; border-radius:14px;"></div>
+              <span style="font-size:11px; opacity:0.85;">Escaneie para entrar na sala <strong id="qr-code-lbl">SNK6</strong></span>
+            </div>
+          </div>
+
+          <div class="soft-box" style="padding:11px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+            <span style="font-size:12px; font-weight:800;">Entrar por código:</span>
+            <div style="display:flex; gap:6px;">
+              <input id="input-join-code" type="text" maxlength="4" placeholder="CÓD." class="glass-box font-mono" style="width:68px; padding:7px; border-radius:10px; font-size:12px; font-weight:900; text-transform:uppercase; text-align:center; outline:none;" />
+              <button type="button" id="btn-join-room" class="btn-primary" style="padding:7px 14px; font-size:11px; text-transform:uppercase;">Entrar</button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="lobby-footer">
+        <button type="button" id="btn-start-arena" class="btn-primary">
+          <span>▶</span>
+          <span>JOGAR AGORA</span>
+        </button>
+      </div>
+    </main>
+
+    <footer class="lobby-shell" style="text-align:center; font-size:10px; color:var(--text-muted); pointer-events:none;">
+      Arraste na tela para guiar 360° • Duplo toque ou 🔥 Turbo para acelerar • P/Esc pausa
+    </footer>
+  </div>
+
+  <!-- =========================================================================
+       TELA 2: HUD IN-GAME (PLACAR, RADAR DE PROXIMIDADE, COORDENADAS & TURBO)
+       ========================================================================= -->
+  <div id="hud-overlay" class="hidden">
+    <div class="hud-top">
+      <div class="glass-box hud-board">
+        <div class="hud-board-head">
+          <span id="hud-mode-tag" style="font-size:10px; font-weight:900; text-transform:uppercase; color:var(--accent);">♾️ INFINITO • MÉDIO</span>
+          <span id="hud-timer" class="font-mono" style="font-size:11px; font-weight:900;">♾️ ONDA 1</span>
+        </div>
+        <div id="hud-leaderboard" style="display:flex; flex-direction:column; gap:2px; font-size:11px;"></div>
+        <div id="hud-coords-row" class="font-mono" style="margin-top:5px; padding-top:4px; border-top:1px solid var(--panel-border); font-size:10px; color:var(--text-muted); display:flex; justify-content:space-between;">
+          <span>🧭 Mundo Aberto</span>
+          <span id="hud-coords-val">X: 0 · Y: 0</span>
+        </div>
+      </div>
+
+      <!-- Radar / Minimapa + Pausa, Som & Tela Cheia -->
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; pointer-events:auto;">
+        <div id="minimap-shell" class="glass-box" style="padding:4px; border-radius:999px;">
+          <canvas id="minimap-canvas" width="92" height="92" style="display:block; border-radius:999px;"></canvas>
+        </div>
+        <div style="display:flex; align-items:center; gap:5px;">
+          <button type="button" id="btn-hud-pause" class="glass-box hud-icon-btn" title="Pausar (P / Esc)" aria-label="Pausar">⏸</button>
+          <button type="button" id="btn-hud-fullscreen" class="glass-box hud-icon-btn" title="Tela Cheia" aria-label="Tela Cheia">⛶</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="respawn-banner" class="hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; text-align:center;">
+      <div class="glass-box" style="padding:14px 22px;">
+        <div id="respawn-reason" style="font-size:11px; font-weight:800; color:var(--text-muted);">Você foi eliminado!</div>
+        <div class="font-arena" style="font-size:18px; color:var(--accent); margin-top:2px;">Renascendo em <span id="respawn-countdown">3</span>s...</div>
+      </div>
+    </div>
+
+    <div class="hud-bottom">
+      <div style="display:flex; flex-direction:column; gap:6px; pointer-events:none;">
+        <div id="hud-active-buffs" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+        <div class="glass-box" style="padding:8px 14px 8px 8px; border-radius:16px; display:flex; align-items:center; gap:12px; align-self:flex-start;">
+          <span id="hud-avatar-slot" style="display:flex;"></span>
+          <div>
+            <span style="font-size:9px; font-weight:800; text-transform:uppercase; color:var(--text-muted); display:block;">Sua Massa</span>
+            <span id="hud-my-score" class="font-arena" style="font-size:17px; color:var(--accent);">100</span>
+          </div>
+          <div id="hud-best-box" style="border-left:1.5px solid var(--panel-border); padding-left:12px;">
+            <span style="font-size:9px; font-weight:800; text-transform:uppercase; color:var(--text-muted); display:block;">🏆 Recorde</span>
+            <span id="hud-best-score" class="font-arena" style="font-size:17px;">100</span>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" id="btn-turbo" class="btn-primary">
+        <span style="font-size:20px; line-height:1; pointer-events:none;">🔥</span>
+        <span class="font-arena" style="font-size:10px; pointer-events:none;">TURBO</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 1: GUIA RÁPIDO
+       ========================================================================= -->
+  <div id="modal-tutorial" class="modal-backdrop hidden">
+    <div class="glass-box modal-card custom-scroll" style="display:flex; flex-direction:column; gap:12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div>
+          <span style="font-size:10px; font-weight:900; text-transform:uppercase; color:var(--accent);">Manual Rápido</span>
+          <h3 class="font-arena" style="margin:2px 0 0; font-size:18px;">Mundo Infinito, Perigos &amp; Itens</h3>
+        </div>
+        <button type="button" id="btn-close-tutorial" class="soft-box" style="width:34px; height:34px; border-radius:999px; font-weight:900;">✕</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px; font-size:12px; line-height:1.45;">
+        <div class="soft-box" style="padding:10px 12px;">
+          <div style="font-weight:900; color:var(--accent); margin-bottom:3px;">♾️ Mundo Infinito Sem Bordas:</div>
+          <div>• <strong>Sem Paredes Externas:</strong> Navegue livremente em qualquer direção (<code>X, Y</code> ilimitados). Novos setores, orbes, itens especiais e rivais surgem conforme você explora!</div>
+          <div>• <strong>Radar Circular:</strong> No topo direito, mostra rivais e itens próximos ao redor da sua cabeça.</div>
+        </div>
+
+        <div class="soft-box" style="padding:10px 12px;">
+          <div style="font-weight:900; color:var(--accent); margin-bottom:3px;">⚠️ Obstáculos Dinâmicos:</div>
+          <div>• <strong>Pilares Sólidos:</strong> Blocos fixos letais ao impacto (exceto com Escudo ou Espectral).</div>
+          <div>• <strong>❄️ Campos de Gelo:</strong> Reduzem sua velocidade em 55% e travam o Turbo por 2,5s.</div>
+          <div>• <strong>🌀 Vórtices:</strong> Puxam quem passa perto para o centro.</div>
+          <div>• <strong>⚡ Lasers Temporizados:</strong> Alternam entre linha tracejada de aviso e feixe ativo.</div>
+        </div>
+
+        <div class="soft-box" style="padding:10px 12px;">
+          <div style="font-weight:900; color:var(--accent); margin-bottom:3px;">🎁 6 Itens Especiais Coletáveis:</div>
+          <div>• <strong>🧲 Ímã (8s):</strong> Puxa orbes próximos direto para sua boca.</div>
+          <div>• <strong>🛡️ Escudo (7s):</strong> Absorve 1 colisão fatal contra pilar, laser ou rival.</div>
+          <div>• <strong>❄️ Nova Glacial (3,5s):</strong> Congela todos os inimigos ao redor!</div>
+          <div>• <strong>⚡ Turbo Infinito (6s):</strong> Acelera no máximo sem gastar massa.</div>
+          <div>• <strong>💎 Mega Cristal:</strong> Concede <strong>+60 pontos</strong> na hora.</div>
+          <div>• <strong>👻 Espectral (6s):</strong> Atravessa corpos inimigos e pilares livremente.</div>
+        </div>
+      </div>
+
+      <button type="button" id="btn-ok-tutorial" class="btn-primary" style="width:100%; padding:12px; font-size:12px; text-transform:uppercase;">Entendi, Voltar</button>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 2: FIM DE JOGO
+       ========================================================================= -->
+  <div id="modal-gameover" class="modal-backdrop hidden">
+    <div class="glass-box modal-card" style="max-width:370px; text-align:center; display:flex; flex-direction:column; gap:14px;">
+      <div style="font-size:42px; line-height:1;">🏆</div>
+      <div>
+        <span style="font-size:10px; font-weight:900; text-transform:uppercase; color:var(--accent);">Resultado</span>
+        <h3 id="gameover-winner" class="font-arena" style="margin:4px 0; font-size:22px;">Fim da Exploração</h3>
+        <p style="margin:0; font-size:12px; color:var(--text-muted);">Resumo da sua jornada</p>
+      </div>
+
+      <div id="gameover-ranking" class="soft-box" style="padding:12px; font-size:12px; display:flex; flex-direction:column; gap:6px; text-align:left;"></div>
+
+      <div style="display:flex; gap:8px;">
+        <button type="button" id="btn-play-again" class="btn-primary" style="flex:1; padding:12px; font-size:12px; text-transform:uppercase;">Jogar Novamente</button>
+        <button type="button" id="btn-back-lobby" class="soft-box" style="padding:12px 16px; font-size:12px; font-weight:900;">Lobby</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 3: PAUSA
+       ========================================================================= -->
+  <div id="modal-pause" class="modal-backdrop hidden">
+    <div class="glass-box modal-card" style="max-width:320px; text-align:center; display:flex; flex-direction:column; gap:12px;">
+      <div style="font-size:38px; line-height:1;">⏸</div>
+      <h3 id="pause-title" class="font-arena" style="margin:0; font-size:20px;">Jogo Pausado</h3>
+      <button type="button" id="btn-resume" class="btn-primary" style="width:100%; padding:13px; font-size:13px; text-transform:uppercase;">▶ Continuar</button>
+      <button type="button" id="btn-pause-sound" class="soft-box" style="width:100%; padding:11px; font-size:12px; font-weight:900;">🔊 Som: Ligado</button>
+      <button type="button" id="btn-pause-exit" class="soft-box" style="width:100%; padding:11px; font-size:12px; font-weight:900;">✕ Sair para o Lobby</button>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 4: PERFIL DO JOGADOR (CADASTRO NO PRIMEIRO ACESSO)
+       ========================================================================= -->
+  <div id="modal-profile" class="modal-backdrop hidden" style="z-index:50;">
+    <div class="glass-box modal-card custom-scroll" style="max-width:400px; display:flex; flex-direction:column; gap:14px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <div>
+          <span id="profile-modal-kicker" style="font-size:10px; font-weight:900; text-transform:uppercase; color:var(--accent);">Bem-vindo à Arena</span>
+          <h3 id="profile-modal-title" class="font-arena" style="margin:2px 0 0; font-size:18px;">Crie seu Perfil</h3>
+        </div>
+        <button type="button" id="btn-close-profile" class="soft-box hidden" style="width:36px; height:36px; border-radius:999px; font-weight:900;" aria-label="Fechar">✕</button>
+      </div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+        <span id="profile-avatar-preview" style="display:flex;"></span>
+        <div id="profile-camera-panel" class="hidden" style="width:100%; display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <video id="profile-camera-video" playsinline muted autoplay></video>
+          <div style="display:flex; gap:8px; width:100%; max-width:260px;">
+            <button type="button" id="btn-camera-snap" class="btn-primary" style="flex:1; padding:11px; font-size:12px;">📸 Tirar Foto</button>
+            <button type="button" id="btn-camera-cancel" class="soft-box" style="padding:11px 14px; font-size:12px; font-weight:900;">Cancelar</button>
+          </div>
+        </div>
+        <div id="profile-photo-actions" style="display:flex; gap:8px; width:100%;">
+          <button type="button" id="btn-profile-camera" class="soft-box" style="flex:1; padding:11px 6px; font-size:12px; font-weight:900;">📷 Câmera</button>
+          <button type="button" id="btn-profile-gallery" class="soft-box" style="flex:1; padding:11px 6px; font-size:12px; font-weight:900;">🖼️ Galeria</button>
+        </div>
+        <input id="input-photo-gallery" type="file" accept="image/*" class="hidden" />
+        <input id="input-photo-capture" type="file" accept="image/*" capture="user" class="hidden" />
+      </div>
+
+      <div>
+        <span class="section-lbl">Ou escolha um ícone</span>
+        <div id="profile-preset-grid" style="display:grid; grid-template-columns:repeat(6, 1fr); gap:6px;"></div>
+      </div>
+
+      <div>
+        <label for="input-profile-name" class="section-lbl">Seu apelido (até 12 letras)</label>
+        <input id="input-profile-name" type="text" maxlength="12" autocomplete="nickname" placeholder="Ex.: Cobrinha" class="soft-box" style="width:100%; padding:11px 12px; font-size:15px; font-weight:900; outline:none;" />
+        <div id="profile-name-error" class="hidden" style="margin-top:5px; font-size:11px; font-weight:800; color:var(--accent-2);">Digite um apelido para continuar.</div>
+      </div>
+
+      <button type="button" id="btn-save-profile" class="btn-primary" style="width:100%; padding:13px; font-size:13px; text-transform:uppercase;">Salvar Perfil</button>
+      <p style="margin:0; font-size:10px; color:var(--text-muted); text-align:center;">Seu perfil e sua foto ficam salvos só neste aparelho.</p>
+    </div>
+  </div>
+
+  <div id="toast-anchor"></div>
+
+  <!-- =========================================================================
+       MOTOR DO JOGO: MUNDO PROCEDURAL INFINITO SEM BORDAS + ARENA COMPETITIVA
+       ========================================================================= -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      'use strict';
+
+      /* -----------------------------------------------------------------------
+         1. PWA: SERVICE WORKER (manifest.json + sw.js ao lado do index.html)
+         ----------------------------------------------------------------------- */
+      if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      }
+
+      /* Escapa texto antes de inserir via innerHTML (nomes vêm da rede) */
+      function escapeHTML(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[ch]));
+      }
+
+      const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i;
+      function safeColor(value, fallback) {
+        return HEX_COLOR_RE.test(String(value)) ? value : fallback;
+      }
+
+      /* -----------------------------------------------------------------------
+         2. SINTETIZADOR DE ÁUDIO PROCEDURAL (WEB AUDIO API + MODO NOKIA 3310)
+         ----------------------------------------------------------------------- */
+      class ArenaAudio {
+        constructor() {
+          this.enabled = true;
+          this.ctx = null;
+        }
+        init() {
+          if (!this.enabled) return null;
+          try {
+            if (!this.ctx) {
+              const AC = window.AudioContext || window.webkitAudioContext;
+              if (AC) this.ctx = new AC();
+            }
+            if (this.ctx && this.ctx.state === 'suspended') {
+              this.ctx.resume().catch(() => {});
+            }
+          } catch (_) {}
+          return this.ctx;
+        }
+        tone(freq, type = 'sine', dur = 0.08, vol = 0.08, endFreq = null) {
+          const ctx = this.init();
+          if (!ctx || !this.enabled) return;
+          try {
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, now);
+            if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, now + dur);
+            gain.gain.setValueAtTime(vol, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + dur + 0.01);
+          } catch (_) {}
+        }
+        eat(bonus = false) {
+          if (state.theme === 'nokia' || state.theme === 'retro') {
+            if (bonus) {
+              this.tone(1046.5, 'square', 0.055, 0.07);
+              setTimeout(() => this.tone(1318.5, 'square', 0.055, 0.07), 50);
+              setTimeout(() => this.tone(1567.98, 'square', 0.08, 0.07), 100);
+            } else {
+              this.tone(880, 'square', 0.05, 0.065);
+            }
+            return;
+          }
+          if (bonus) {
+            this.tone(660, 'triangle', 0.08, 0.09, 990);
+            setTimeout(() => this.tone(990, 'triangle', 0.11, 0.09, 1320), 60);
+          } else {
+            this.tone(520 + Math.random() * 140, 'sine', 0.055, 0.06, 760);
+          }
+        }
+        powerup() {
+          if (state.theme === 'nokia' || state.theme === 'retro') {
+            [659.25, 880, 1046.5, 1318.5].forEach((f, i) => {
+              setTimeout(() => this.tone(f, 'square', 0.065, 0.07), i * 48);
+            });
+            return;
+          }
+          [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+            setTimeout(() => this.tone(f, 'triangle', 0.11, 0.085), i * 52);
+          });
+        }
+        freezePulse() {
+          if (state.theme === 'nokia' || state.theme === 'retro') {
+            this.tone(1174.66, 'square', 0.075, 0.07);
+            setTimeout(() => this.tone(587.33, 'square', 0.11, 0.07), 70);
+            return;
+          }
+          this.tone(880, 'sine', 0.22, 0.1, 220);
+        }
+        shieldBlock() {
+          this.tone(320, 'square', 0.12, 0.09, 640);
+        }
+        crash() {
+          if (state.theme === 'nokia' || state.theme === 'retro') {
+            [330, 246.94, 196, 130.81].forEach((f, i) => {
+              setTimeout(() => this.tone(f, 'square', 0.08, 0.08), i * 60);
+            });
+          } else {
+            this.tone(180, 'sawtooth', 0.24, 0.12, 48);
+          }
+          if (navigator.vibrate) try { navigator.vibrate([30, 20, 40]); } catch (_) {}
+        }
+        win() {
+          [440, 554.37, 659.25, 880, 1108.73].forEach((f, i) => {
+            setTimeout(() => this.tone(f, state.theme === 'nokia' ? 'square' : 'triangle', 0.22, 0.1), i * 90);
+          });
+        }
+        lose() {
+          [523.25, 440, 349.23, 261.63].forEach((f, i) => {
+            setTimeout(() => this.tone(f, state.theme === 'nokia' ? 'square' : 'triangle', 0.2, 0.09), i * 110);
+          });
+        }
+      }
+      const sfx = new ArenaAudio();
+
+      /* -----------------------------------------------------------------------
+         3. CONFIGURAÇÃO DE ESPÉCIES, CORES, 7 TEMAS E DIFICULDADE
+         ----------------------------------------------------------------------- */
+      const SKINS = [
+        { id: 'viper', name: 'Víbora Cyber', icon: '⚡' },
+        { id: 'dragon', name: 'Dragão Imperial', icon: '🐉' },
+        { id: 'axolotl', name: 'Axolote Estelar', icon: '🌸' },
+        { id: 'coral', name: 'Cobra Coral', icon: '🐍' },
+        { id: 'glacial', name: 'Espectro Glacial', icon: '❄️' }
+      ];
+
+      const SNAKE_COLORS = [
+        { id: 'cyan', hex: '#22d3ee', label: 'Ciano Neon' },
+        { id: 'emerald', hex: '#4ade80', label: 'Esmeralda' },
+        { id: 'crimson', hex: '#f43f5e', label: 'Carmesim' },
+        { id: 'gold', hex: '#facc15', label: 'Ouro Solar' },
+        { id: 'violet', hex: '#c084fc', label: 'Violeta' },
+        { id: 'white', hex: '#f8fafc', label: 'Branco Puro' }
+      ];
+
+      const THEMES = {
+        cyber: {
+          bg: '#070b1d',
+          grid: 'rgba(34, 211, 238, 0.09)',
+          border: '#f43f5e',
+          pillarFill: '#111b3d',
+          pillarStroke: '#22d3ee',
+          teamAColor: '#22d3ee',
+          teamBColor: '#f43f5e'
+        },
+        nokia: {
+          bg: '#9bbc0f',
+          grid: 'rgba(15, 56, 15, 0.13)',
+          border: '#0f380f',
+          pillarFill: '#306230',
+          pillarStroke: '#0f380f',
+          teamAColor: '#0f380f',
+          teamBColor: '#306230'
+        },
+        notebook: {
+          bg: '#f8fafc',
+          grid: 'rgba(59, 130, 246, 0.18)',
+          border: '#dc2626',
+          pillarFill: '#dbeafe',
+          pillarStroke: '#1d4ed8',
+          teamAColor: '#1d4ed8',
+          teamBColor: '#dc2626'
+        },
+        abyss: {
+          bg: '#020c1b',
+          grid: 'rgba(45, 212, 191, 0.08)',
+          border: '#38bdf8',
+          pillarFill: '#082040',
+          pillarStroke: '#2dd4bf',
+          teamAColor: '#2dd4bf',
+          teamBColor: '#38bdf8'
+        },
+        jungle: {
+          bg: '#0e2416',
+          grid: 'rgba(163, 230, 53, 0.08)',
+          border: '#fb923c',
+          pillarFill: '#1a3c26',
+          pillarStroke: '#a3e635',
+          teamAColor: '#a3e635',
+          teamBColor: '#fb923c'
+        },
+        magma: {
+          bg: '#1c0a08',
+          grid: 'rgba(251, 146, 60, 0.09)',
+          border: '#ef4444',
+          pillarFill: '#36130e',
+          pillarStroke: '#fb923c',
+          teamAColor: '#fb923c',
+          teamBColor: '#f43f5e'
+        },
+        retro: {
+          bg: '#232d20',
+          grid: 'rgba(163, 217, 119, 0.12)',
+          border: '#a3d977',
+          pillarFill: '#344430',
+          pillarStroke: '#a3d977',
+          teamAColor: '#a3d977',
+          teamBColor: '#facc15'
+        }
+      };
+
+      const DIFFICULTY_CFG = {
+        easy: { label: 'Fácil', lookAhead: 95, reactionInterval: 0.45, turnMult: 0.72, boostChance: 0.05, predictive: false, huntPowerups: false },
+        medium: { label: 'Médio', lookAhead: 130, reactionInterval: 0.25, turnMult: 0.95, boostChance: 0.25, predictive: false, huntPowerups: true },
+        hard: { label: 'Difícil', lookAhead: 165, reactionInterval: 0.14, turnMult: 1.15, boostChance: 0.55, predictive: false, huntPowerups: true },
+        insane: { label: 'Insano', lookAhead: 210, reactionInterval: 0.08, turnMult: 1.35, boostChance: 0.85, predictive: true, huntPowerups: true }
+      };
+
+      const POWERUP_TYPES = [
+        { kind: 'magnet', icon: '🧲', name: 'Ímã Cósmico', color: '#38bdf8' },
+        { kind: 'shield', icon: '🛡️', name: 'Escudo de Fase', color: '#60a5fa' },
+        { kind: 'freeze', icon: '❄️', name: 'Nova Glacial', color: '#67e8f9' },
+        { kind: 'overdrive', icon: '⚡', name: 'Turbo Infinito', color: '#fb923c' },
+        { kind: 'crystal', icon: '💎', name: 'Mega Cristal', color: '#e879f9' },
+        { kind: 'ghost', icon: '👻', name: 'Forma Espectral', color: '#cbd5e1' }
+      ];
+
+      const BOT_NAMES = ['Viper', 'Kobra', 'Nagini', 'Drako', 'Sombra', 'Rayo'];
+
+      /* -----------------------------------------------------------------------
+         4. CONSTANTES DE MUNDO INFINITO & ARENA COMPETITIVA
+         ----------------------------------------------------------------------- */
+      const ARENA_SIZE = 2300;
+      const CHUNK_SIZE = 900;
+      const STREAM_RADIUS_CHUNKS = 2;
+      const DESPAWN_DIST = 2600;
+      const RADAR_RANGE = 1550;
+      const ROUND_DURATION = 120;
+      const MAX_ORBS = 150;
+      const MAX_PARTICLES = 55;
+      const MAX_VISUAL_SEGMENTS = 95;
+      const ENDLESS_RECORD_KEY = 'serpente_arena_endless_best_v4';
+
+      function loadEndlessBest() {
+        try {
+          return Math.max(100, Number(localStorage.getItem(ENDLESS_RECORD_KEY)) || 100);
+        } catch (_) {
+          return 100;
+        }
+      }
+
+      function saveEndlessBest(score) {
+        if (score <= state.endlessBest) return false;
+        state.endlessBest = score;
+        try { localStorage.setItem(ENDLESS_RECORD_KEY, String(score)); } catch (_) {}
+        return true;
+      }
+
+      /* Perfil local (nome + avatar) e preferências persistidas no aparelho */
+      const PROFILE_KEY = 'serpente_arena_profile_v1';
+      const PREFS_KEY = 'serpente_arena_prefs_v1';
+      const AVATAR_PRESETS = ['🐍', '🐉', '🦎', '🐲', '🦖', '🐊', '🐢', '🦊', '🐸', '🐱', '🤖', '👾'];
+      const PHOTO_DATA_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+
+      function sanitizeAvatar(avatar) {
+        if (avatar && avatar.type === 'photo' && PHOTO_DATA_RE.test(String(avatar.value))) {
+          return { type: 'photo', value: avatar.value };
+        }
+        if (avatar && avatar.type === 'emoji' && AVATAR_PRESETS.includes(avatar.value)) {
+          return { type: 'emoji', value: avatar.value };
+        }
+        return { type: 'emoji', value: AVATAR_PRESETS[0] };
+      }
+
+      function loadProfile() {
+        try {
+          const raw = JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null');
+          if (!raw || typeof raw.name !== 'string' || !raw.name.trim()) return null;
+          return { name: raw.name.trim().slice(0, 12), avatar: sanitizeAvatar(raw.avatar) };
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function saveProfile(profile) {
+        try {
+          localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function loadPrefs() {
+        try {
+          return JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') || {};
+        } catch (_) {
+          return {};
+        }
+      }
+
+      function savePrefs() {
+        try {
+          localStorage.setItem(PREFS_KEY, JSON.stringify({
+            theme: state.theme,
+            selectedSkin: state.selectedSkin,
+            selectedColor: state.selectedColor,
+            botDifficulty: state.botDifficulty,
+            hazardLevel: state.hazardLevel,
+            mode: state.mode,
+            totalCompetitors: state.totalCompetitors,
+            sound: sfx.enabled
+          }));
+        } catch (_) {}
+      }
+
+      function avatarMarkup(avatar, size) {
+        const av = sanitizeAvatar(avatar);
+        const dims = `width:${size}px; height:${size}px;`;
+        if (av.type === 'photo') {
+          return `<img class="avatar-img" src="${av.value}" alt="" style="${dims}" />`;
+        }
+        return `<span class="avatar-emoji" style="${dims} font-size:${Math.round(size * 0.58)}px;">${av.value}</span>`;
+      }
+
+      const state = {
+        activeLobbyTab: 'play',
+        theme: 'cyber',
+        selectedSkin: 'viper',
+        selectedColor: '#22d3ee',
+        botDifficulty: 'medium',
+        hazardLevel: 'normal',
+        roomCode: 'SNK6',
+        mode: 'endless',
+        totalCompetitors: 6,
+        playerName: 'Você',
+        profile: null,
+        isHost: true,
+        hostConnected: false,
+        lastHostMsgAt: 0,
+        localSlot: 0,
+        remotePeers: {},
+
+        phase: 'lobby',
+        paused: false,
+        lastDeathCause: '',
+        timeLeft: ROUND_DURATION,
+        endlessWave: 1,
+        endlessBest: loadEndlessBest(),
+        isNewRecord: false,
+        generatedChunks: new Set(),
+
+        snakes: [],
+        orbs: [],
+        powerups: [],
+        pillars: [],
+        iceZones: [],
+        vortices: [],
+        lasers: [],
+        shockwaves: [],
+        particles: [],
+        plankton: [],
+
+        camera: { x: 0, y: 0 },
+        input: {
+          targetAngle: null,
+          // Turbo combina várias fontes: soltar uma não desliga as outras
+          boost: { tap: false, extraFinger: false, button: false, key: false, mouse: false },
+          keys: { up: false, down: false, left: false, right: false }
+        },
+        touchJoy: {
+          id: null,
+          originX: 0,
+          originY: 0,
+          currX: 0,
+          currY: 0,
+          lastTapTime: 0,
+          extraTouches: new Set()
+        }
+      };
+
+      function isBoostInputActive() {
+        const b = state.input.boost;
+        return b.tap || b.extraFinger || b.button || b.key || b.mouse;
+      }
+
+      function resetInputState() {
+        const b = state.input.boost;
+        b.tap = b.extraFinger = b.button = b.key = b.mouse = false;
+        const k = state.input.keys;
+        k.up = k.down = k.left = k.right = false;
+        state.input.targetAngle = null;
+        state.touchJoy.id = null;
+        state.touchJoy.extraTouches.clear();
+        const tb = document.getElementById('btn-turbo');
+        if (tb) tb.classList.remove('turbo-btn-active');
+      }
+
+      let bc = null;
+      let peer = null;
+      let peerConns = [];
+      let peerScriptRequested = false;
+      const tabId = 'snk_' + Math.random().toString(36).slice(2, 8);
+
+      function isInfiniteWorld() {
+        return state.mode === 'endless';
+      }
+
+      /* -----------------------------------------------------------------------
+         5. REDE P2P OPCIONAL & QR CODE
+         ----------------------------------------------------------------------- */
+      function makeRoomCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let out = '';
+        for (let i = 0; i < 4; i++) out += chars[Math.floor(Math.random() * chars.length)];
+        return out;
+      }
+
+      function getShareUrl() {
+        return `${window.location.origin}${window.location.pathname}?sala=${state.roomCode}`;
+      }
+
+      /* QR Code real (escaneável): biblioteca carregada só quando o painel abre */
+      let qrLibRequested = false;
+      function renderRoomQR() {
+        const slot = document.getElementById('qr-svg-slot');
+        const lbl = document.getElementById('qr-code-lbl');
+        if (!slot) return;
+        if (lbl) lbl.textContent = state.roomCode;
+
+        if (typeof window.qrcode === 'function') {
+          try {
+            const qr = window.qrcode(0, 'M');
+            qr.addData(getShareUrl());
+            qr.make();
+            slot.innerHTML = qr.createSvgTag(4, 2);
+          } catch (_) {
+            slot.innerHTML = '<span style="color:#060918; font-size:11px; font-weight:800;">Não foi possível gerar o QR. Use o link.</span>';
+          }
+          return;
+        }
+
+        slot.innerHTML = '<span style="color:#060918; font-size:11px; font-weight:800;">Carregando QR…</span>';
+        if (qrLibRequested) return;
+        qrLibRequested = true;
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+        s.async = true;
+        s.onload = () => renderRoomQR();
+        s.onerror = () => {
+          qrLibRequested = false;
+          slot.innerHTML = '<span style="color:#060918; font-size:11px; font-weight:800;">Sem internet para gerar o QR. Use o link.</span>';
+        };
+        document.body.appendChild(s);
+      }
+
+      let peerKey = '';
+      let joinTimeoutId = null;
+
+      function setupPeerInstance(code, joining) {
+        if (typeof window.Peer === 'undefined') return;
+        const key = `${code}|${joining ? 'join' : 'host'}`;
+        // Evita destruir e recriar a conexão a cada chamada
+        if (peer && !peer.destroyed && peerKey === key) return;
+        try {
+          if (peer) { try { peer.destroy(); } catch (_) {} }
+          peer = null;
+          peerConns = [];
+          peerKey = key;
+          const pId = joining ? undefined : `serpente-arena-${code}`;
+          peer = new window.Peer(pId, { debug: 0 });
+          peer.on('open', () => {
+            if (joining) attachConn(peer.connect(`serpente-arena-${code}`, { reliable: true }));
+          });
+          peer.on('connection', (conn) => {
+            if (!joining) attachConn(conn);
+          });
+          peer.on('error', (err) => {
+            const type = err && err.type;
+            if (!joining && type === 'unavailable-id') {
+              // Código já usado por outra pessoa no servidor PeerJS: gera outro
+              initRoomNetwork(makeRoomCode(), false);
+              ensurePeerJSLoaded();
+              showToast('Código de sala em uso. Geramos um novo.');
+            } else if (joining && type === 'peer-unavailable' && !state.hostConnected) {
+              fallbackToOwnRoom(`Sala ${code} não encontrada. Criamos uma sala nova para você.`);
+            }
+          });
+        } catch (_) {}
+      }
+
+      function ensurePeerJSLoaded() {
+        if (typeof window.Peer !== 'undefined') {
+          setupPeerInstance(state.roomCode, !state.isHost);
+          return;
+        }
+        if (peerScriptRequested) return;
+        peerScriptRequested = true;
+        try {
+          const s = document.createElement('script');
+          s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+          s.async = true;
+          s.onload = () => setupPeerInstance(state.roomCode, !state.isHost);
+          s.onerror = () => { peerScriptRequested = false; };
+          document.body.appendChild(s);
+        } catch (_) {
+          peerScriptRequested = false;
+        }
+      }
+
+      function initRoomNetwork(code, joining = false) {
+        if (bc) { try { bc.close(); } catch (_) {} bc = null; }
+        if (peer) { try { peer.destroy(); } catch (_) {} peer = null; }
+        peerConns = [];
+        peerKey = '';
+        clearTimeout(joinTimeoutId);
+
+        state.roomCode = String(code).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || makeRoomCode();
+        state.isHost = !joining;
+        state.hostConnected = false;
+        state.lastHostMsgAt = 0;
+        state.remotePeers = {};
+        state.localSlot = joining ? 1 : 0;
+
+        document.getElementById('lobby-room-code').textContent = state.roomCode;
+        const qrPanel = document.getElementById('qr-panel');
+        if (qrPanel && !qrPanel.classList.contains('hidden')) renderRoomQR();
+        updatePeersBadge();
+
+        // Remove ?sala= da URL: recarregar a página nunca deve reentrar como convidado
+        try {
+          const url = new URL(window.location.href);
+          if (url.searchParams.has('sala')) {
+            url.searchParams.delete('sala');
+            window.history.replaceState({}, '', url.toString());
+          }
+        } catch (_) {}
+
+        if ('BroadcastChannel' in window) {
+          try {
+            bc = new BroadcastChannel('serpente_arena_' + state.roomCode);
+            bc.onmessage = (e) => handleNetMessage(e.data);
+          } catch (_) {}
+        }
+
+        if (joining) {
+          ensurePeerJSLoaded();
+          sendNet({ type: 'HELLO_PEER', name: state.playerName, skin: state.selectedSkin, color: state.selectedColor });
+          showToast(`Procurando a sala ${state.roomCode}…`);
+          const joinCode = state.roomCode;
+          joinTimeoutId = setTimeout(() => {
+            if (!state.isHost && !state.hostConnected && state.roomCode === joinCode) {
+              fallbackToOwnRoom(`Sala ${joinCode} não encontrada. Criamos uma sala nova para você.`);
+            }
+          }, 9000);
+        }
+      }
+
+      function fallbackToOwnRoom(message) {
+        initRoomNetwork(makeRoomCode(), false);
+        if (state.phase !== 'lobby') returnToLobby();
+        showToast(message);
+      }
+
+      function attachConn(conn) {
+        if (!conn) return;
+        peerConns.push(conn);
+        conn.on('open', () => {
+          if (!state.isHost) {
+            sendNet({ type: 'HELLO_PEER', name: state.playerName, skin: state.selectedSkin, color: state.selectedColor });
+          }
+        });
+        conn.on('data', (d) => handleNetMessage(d));
+        conn.on('close', () => {
+          peerConns = peerConns.filter(c => c !== conn);
+        });
+        conn.on('error', () => {});
+      }
+
+      function sendNet(payload) {
+        const msg = { ...payload, sender: tabId, room: state.roomCode };
+        if (bc) { try { bc.postMessage(msg); } catch (_) {} }
+        peerConns.forEach(c => { if (c.open) { try { c.send(msg); } catch (_) {} } });
+      }
+
+      function hasRemotePeers() {
+        return Object.keys(state.remotePeers).length > 0;
+      }
+
+      function broadcastSnapshot() {
+        sendNet({
+          type: 'WORLD_SNAPSHOT',
+          phase: state.phase,
+          mode: state.mode,
+          timeLeft: state.timeLeft,
+          endlessWave: state.endlessWave,
+          snakes: state.snakes,
+          orbs: state.orbs,
+          powerups: state.powerups,
+          pillars: state.pillars,
+          iceZones: state.iceZones,
+          vortices: state.vortices,
+          lasers: state.lasers
+        });
+      }
+
+      function removeRemotePeer(senderId) {
+        const info = state.remotePeers[senderId];
+        if (!info) return;
+        delete state.remotePeers[senderId];
+        const snake = state.snakes[info.slot];
+        if (snake && !snake.isBot) {
+          // Jogador saiu: a cobra vira bot em vez de andar reto para sempre
+          snake.isBot = true;
+          snake.boosting = false;
+          snake.aiTimer = 0;
+        }
+        updatePeersBadge();
+        showToast(`${info.name} saiu da sala.`);
+      }
+
+      const VALID_MODES = ['endless', 'solo', '2v2', '3v3'];
+
+      function handleNetMessage(msg) {
+        if (!msg || typeof msg !== 'object' || !msg.type || msg.sender === tabId) return;
+        if (msg.room && msg.room !== state.roomCode) return;
+        const now = performance.now();
+
+        if (state.isHost && state.remotePeers[msg.sender]) {
+          state.remotePeers[msg.sender].lastSeen = now;
+        }
+        if (!state.isHost && (msg.type === 'ASSIGN_SLOT' || msg.type === 'WORLD_SNAPSHOT' || msg.type === 'HOST_PING')) {
+          state.lastHostMsgAt = now;
+        }
+
+        if (msg.type === 'HELLO_PEER' && state.isHost) {
+          if (!state.remotePeers[msg.sender]) {
+            const usedSlots = new Set(Object.values(state.remotePeers).map(p => p.slot));
+            let slot = 1;
+            while (usedSlots.has(slot) && slot < 6) slot++;
+            if (slot >= 6) {
+              sendNet({ type: 'ROOM_FULL', targetSender: msg.sender });
+              return;
+            }
+            const cleanName = String(msg.name || '').trim().slice(0, 12) || `Amigo ${slot}`;
+            state.remotePeers[msg.sender] = {
+              slot,
+              name: cleanName,
+              skin: SKINS.some(sk => sk.id === msg.skin) ? msg.skin : 'viper',
+              color: safeColor(msg.color, '#f43f5e'),
+              lastSeen: now
+            };
+            showToast(state.phase === 'playing'
+              ? `${cleanName} entrou! Joga a partir da próxima rodada.`
+              : `${cleanName} entrou na sala!`);
+          } else {
+            // Convidado já conhecido reenviou HELLO (ex.: editou o perfil): atualiza dados
+            const known = state.remotePeers[msg.sender];
+            known.name = String(msg.name || '').trim().slice(0, 12) || known.name;
+            if (SKINS.some(sk => sk.id === msg.skin)) known.skin = msg.skin;
+            known.color = safeColor(msg.color, known.color);
+          }
+          updatePeersBadge();
+          sendNet({
+            type: 'ASSIGN_SLOT',
+            targetSender: msg.sender,
+            slot: state.remotePeers[msg.sender].slot,
+            mode: state.mode,
+            totalCompetitors: state.totalCompetitors
+          });
+        } else if (msg.type === 'ROOM_FULL' && msg.targetSender === tabId && !state.isHost) {
+          fallbackToOwnRoom('Sala cheia (6/6). Criamos uma sala nova para você.');
+        } else if (msg.type === 'ASSIGN_SLOT' && msg.targetSender === tabId && !state.isHost) {
+          clearTimeout(joinTimeoutId);
+          const wasConnected = state.hostConnected;
+          state.hostConnected = true;
+          state.localSlot = Math.max(1, Math.min(5, Number(msg.slot) || 1));
+          if (VALID_MODES.includes(msg.mode)) state.mode = msg.mode;
+          state.totalCompetitors = Math.max(2, Math.min(6, Number(msg.totalCompetitors) || 6));
+          refreshLobbyUI();
+          updatePeersBadge();
+          if (!wasConnected) showToast(`Conectado na sala ${state.roomCode}! Aguarde o anfitrião iniciar.`);
+        } else if (msg.type === 'PEER_INPUT' && state.isHost) {
+          const info = state.remotePeers[msg.sender];
+          const snake = info && state.snakes[info.slot];
+          if (snake && !snake.isBot && Number.isFinite(msg.angle)) {
+            snake.targetAngle = msg.angle;
+            snake.boosting = !!msg.boosting;
+          }
+        } else if (msg.type === 'WORLD_SNAPSHOT' && !state.isHost && state.hostConnected) {
+          if (!Array.isArray(msg.snakes)) return;
+          const prevPhase = state.phase;
+          state.phase = msg.phase;
+          if (VALID_MODES.includes(msg.mode)) state.mode = msg.mode;
+          state.timeLeft = Number(msg.timeLeft) || 0;
+          state.endlessWave = Number(msg.endlessWave) || 1;
+          state.snakes = msg.snakes;
+          state.orbs = Array.isArray(msg.orbs) ? msg.orbs : [];
+          state.powerups = Array.isArray(msg.powerups) ? msg.powerups : [];
+          state.pillars = Array.isArray(msg.pillars) ? msg.pillars : [];
+          state.iceZones = Array.isArray(msg.iceZones) ? msg.iceZones : [];
+          state.vortices = Array.isArray(msg.vortices) ? msg.vortices : [];
+          state.lasers = Array.isArray(msg.lasers) ? msg.lasers : [];
+          if (state.phase === 'playing' && prevPhase !== 'playing') {
+            resetInputState();
+            document.getElementById('lobby-screen').classList.add('hidden');
+            document.getElementById('modal-gameover').classList.add('hidden');
+            document.getElementById('hud-overlay').classList.remove('hidden');
+            applyHudModeLayout();
+          } else if (state.phase === 'gameover' && prevPhase !== 'gameover') {
+            openGameOverModal();
+          }
+        }
+      }
+
+      function updatePeersBadge() {
+        const count = 1 + Object.keys(state.remotePeers).length;
+        const badge = document.getElementById('room-peers-badge');
+        if (!badge) return;
+        if (!state.isHost) {
+          badge.textContent = state.hostConnected ? 'Conectado' : 'Conectando…';
+        } else {
+          badge.textContent = `${count}/6 na sala`;
+        }
+      }
+
+      /* Batimento: detecta anfitrião ou convidados que saíram */
+      setInterval(() => {
+        const now = performance.now();
+        if (state.isHost) {
+          const ids = Object.keys(state.remotePeers);
+          if (ids.length === 0) return;
+          sendNet({ type: 'HOST_PING' });
+          ids.forEach((id) => {
+            if (now - state.remotePeers[id].lastSeen > 7000) removeRemotePeer(id);
+          });
+        } else if (state.hostConnected) {
+          sendNet({ type: 'PEER_PING' });
+          if (now - state.lastHostMsgAt > 8000) {
+            fallbackToOwnRoom('O anfitrião saiu. Criamos uma sala nova para você.');
+          }
+        }
+      }, 1000);
+
+      /* -----------------------------------------------------------------------
+         6. GERADOR PROCEDURAL DE SETORES (MUNDO INFINITO) & ARENA COMPETITIVA
+         ----------------------------------------------------------------------- */
+      function getEffectiveCompetitorCount() {
+        if (state.mode === '2v2') return 4;
+        if (state.mode === '3v3' || state.mode === 'endless') return 6;
+        return state.totalCompetitors;
+      }
+
+      function seededChunkRand(cx, cy, salt) {
+        let h = Math.imul(cx, 374761393) + Math.imul(cy, 668265263) + Math.imul(salt, 1442695041);
+        h = (h ^ (h >>> 13)) >>> 0;
+        h = Math.imul(h, 1274126177) >>> 0;
+        return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+      }
+
+      function populateInfiniteSector(cx, cy) {
+        const key = `${cx},${cy}`;
+        if (state.generatedChunks.has(key)) return;
+        state.generatedChunks.add(key);
+
+        const baseX = cx * CHUNK_SIZE;
+        const baseY = cy * CHUNK_SIZE;
+        const isOriginSector = cx === 0 && cy === 0;
+
+        // 1) Orbes do setor
+        const orbCount = 12;
+        for (let i = 0; i < orbCount; i++) {
+          const ox = baseX + 60 + seededChunkRand(cx, cy, 10 + i) * (CHUNK_SIZE - 120);
+          const oy = baseY + 60 + seededChunkRand(cx, cy, 40 + i) * (CHUNK_SIZE - 120);
+          const isBonus = seededChunkRand(cx, cy, 70 + i) < 0.14;
+          spawnOrb(ox, oy, isBonus ? 25 : 10, isBonus);
+        }
+
+        // 2) Item especial eventual no setor
+        if (seededChunkRand(cx, cy, 99) < 0.55) {
+          const px = baseX + 140 + seededChunkRand(cx, cy, 101) * (CHUNK_SIZE - 280);
+          const py = baseY + 140 + seededChunkRand(cx, cy, 102) * (CHUNK_SIZE - 280);
+          spawnSpecialItemAt(px, py);
+        }
+
+        // 3) Obstáculos procedurais (pula setor de origem 0,0 para spawn limpo)
+        if (state.hazardLevel === 'none' || isOriginSector) return;
+
+        const isChaos = state.hazardLevel === 'chaos';
+        const pillarCount = isChaos ? 2 : 1;
+        for (let p = 0; p < pillarCount; p++) {
+          const px = baseX + 160 + seededChunkRand(cx, cy, 200 + p) * (CHUNK_SIZE - 320);
+          const py = baseY + 160 + seededChunkRand(cx, cy, 210 + p) * (CHUNK_SIZE - 320);
+          const pr = 38 + Math.round(seededChunkRand(cx, cy, 220 + p) * 14);
+          state.pillars.push({ x: px, y: py, r: pr, chunkKey: key });
+        }
+
+        if (seededChunkRand(cx, cy, 300) < (isChaos ? 0.65 : 0.4)) {
+          const ix = baseX + 200 + seededChunkRand(cx, cy, 301) * (CHUNK_SIZE - 400);
+          const iy = baseY + 200 + seededChunkRand(cx, cy, 302) * (CHUNK_SIZE - 400);
+          state.iceZones.push({ x: ix, y: iy, r: isChaos ? 125 : 105, chunkKey: key });
+        }
+
+        if (seededChunkRand(cx, cy, 400) < (isChaos ? 0.48 : 0.25)) {
+          const vx = baseX + 220 + seededChunkRand(cx, cy, 401) * (CHUNK_SIZE - 440);
+          const vy = baseY + 220 + seededChunkRand(cx, cy, 402) * (CHUNK_SIZE - 440);
+          state.vortices.push({
+            x: vx,
+            y: vy,
+            r: isChaos ? 165 : 135,
+            strength: isChaos ? 135 : 95,
+            chunkKey: key
+          });
+        }
+
+        if (seededChunkRand(cx, cy, 500) < (isChaos ? 0.52 : 0.28)) {
+          const lx = baseX + 220 + seededChunkRand(cx, cy, 501) * (CHUNK_SIZE - 440);
+          const ly = baseY + 220 + seededChunkRand(cx, cy, 502) * (CHUNK_SIZE - 440);
+          const horizontal = seededChunkRand(cx, cy, 503) > 0.5;
+          const halfLen = 115;
+          state.lasers.push({
+            x1: horizontal ? lx - halfLen : lx,
+            y1: horizontal ? ly : ly - halfLen,
+            x2: horizontal ? lx + halfLen : lx,
+            y2: horizontal ? ly : ly + halfLen,
+            phase: seededChunkRand(cx, cy, 504) * 4.5,
+            active: false,
+            warning: false,
+            chunkKey: key
+          });
+        }
+      }
+
+      function streamInfiniteWorldAround(focusX, focusY) {
+        const centerCx = Math.floor(focusX / CHUNK_SIZE);
+        const centerCy = Math.floor(focusY / CHUNK_SIZE);
+
+        for (let dx = -STREAM_RADIUS_CHUNKS; dx <= STREAM_RADIUS_CHUNKS; dx++) {
+          for (let dy = -STREAM_RADIUS_CHUNKS; dy <= STREAM_RADIUS_CHUNKS; dy++) {
+            populateInfiniteSector(centerCx + dx, centerCy + dy);
+          }
+        }
+
+        const pruneCircleArray = (arr) => {
+          for (let i = arr.length - 1; i >= 0; i--) {
+            if (Math.hypot(arr[i].x - focusX, arr[i].y - focusY) > DESPAWN_DIST) {
+              arr.splice(i, 1);
+            }
+          }
+        };
+
+        pruneCircleArray(state.orbs);
+        pruneCircleArray(state.powerups);
+
+        // Esquece setores distantes; seus obstáculos saem junto. Assim, ao voltar,
+        // o setor é recriado igual (seed determinística) em vez de ficar vazio.
+        state.generatedChunks.forEach((key) => {
+          const [cxStr, cyStr] = key.split(',');
+          const cx = Number(cxStr);
+          const cy = Number(cyStr);
+          if (Math.abs(cx - centerCx) > STREAM_RADIUS_CHUNKS + 1 || Math.abs(cy - centerCy) > STREAM_RADIUS_CHUNKS + 1) {
+            state.generatedChunks.delete(key);
+          }
+        });
+
+        const pruneByChunk = (arr) => {
+          for (let i = arr.length - 1; i >= 0; i--) {
+            if (arr[i].chunkKey && !state.generatedChunks.has(arr[i].chunkKey)) arr.splice(i, 1);
+          }
+        };
+        pruneByChunk(state.pillars);
+        pruneByChunk(state.iceZones);
+        pruneByChunk(state.vortices);
+        pruneByChunk(state.lasers);
+      }
+
+      function findSafeSpawn(allySnake = null, focusSnake = null) {
+        const infinite = isInfiniteWorld();
+        const maxAttempts = 25;
+
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          let sx = 0;
+          let sy = 0;
+
+          if (infinite && focusSnake) {
+            const spread = attempt < 15 ? (Math.random() - 0.5) * 2.4 : (Math.random() * Math.PI * 2);
+            const ang = focusSnake.angle + spread;
+            const dist = 560 + Math.random() * 620;
+            sx = focusSnake.x + Math.cos(ang) * dist;
+            sy = focusSnake.y + Math.sin(ang) * dist;
+          } else {
+            const margin = 220;
+            sx = margin + Math.random() * (ARENA_SIZE - margin * 2);
+            sy = margin + Math.random() * (ARENA_SIZE - margin * 2);
+            if (allySnake && attempt < 15) {
+              sx = Math.max(margin, Math.min(ARENA_SIZE - margin, allySnake.x + (Math.random() - 0.5) * 260));
+              sy = Math.max(margin, Math.min(ARENA_SIZE - margin, allySnake.y + (Math.random() - 0.5) * 260));
+            }
+          }
+
+          let safe = true;
+          for (let i = 0; i < state.pillars.length; i++) {
+            const pil = state.pillars[i];
+            if (Math.hypot(sx - pil.x, sy - pil.y) < pil.r + 85) {
+              safe = false;
+              break;
+            }
+          }
+          if (!safe) continue;
+
+          for (let i = 0; i < state.snakes.length; i++) {
+            const other = state.snakes[i];
+            if (!other.alive) continue;
+            if (Math.hypot(sx - other.x, sy - other.y) < 190) {
+              safe = false;
+              break;
+            }
+          }
+
+          if (safe) return { x: sx, y: sy };
+        }
+
+        if (infinite && focusSnake) {
+          const fallbackAng = focusSnake.angle + Math.PI * 0.75;
+          return {
+            x: focusSnake.x + Math.cos(fallbackAng) * 780,
+            y: focusSnake.y + Math.sin(fallbackAng) * 780
+          };
+        }
+
+        const corners = [
+          { x: 240, y: 240 },
+          { x: ARENA_SIZE - 240, y: 240 },
+          { x: 240, y: ARENA_SIZE - 240 },
+          { x: ARENA_SIZE - 240, y: ARENA_SIZE - 240 }
+        ];
+        return corners[Math.floor(Math.random() * corners.length)];
+      }
+
+      function buildBoundedArenaHazards() {
+        state.pillars = [];
+        state.iceZones = [];
+        state.vortices = [];
+        state.lasers = [];
+
+        if (state.hazardLevel === 'none') return;
+
+        const center = ARENA_SIZE / 2;
+        const isChaos = state.hazardLevel === 'chaos';
+
+        const pillarCoords = [
+          [center - 330, center - 330, 44],
+          [center + 330, center - 330, 44],
+          [center - 330, center + 330, 44],
+          [center + 330, center + 330, 44],
+          [center, center - 540, 38],
+          [center, center + 540, 38],
+          [center - 540, center, 38],
+          [center + 540, center, 38]
+        ];
+        if (isChaos) {
+          pillarCoords.push(
+            [center - 780, center - 460, 46],
+            [center + 780, center + 460, 46],
+            [center - 780, center + 460, 46],
+            [center + 780, center - 460, 46]
+          );
+        }
+        pillarCoords.forEach(([x, y, r]) => state.pillars.push({ x, y, r }));
+
+        const iceCoords = [
+          [center - 200, center, 115],
+          [center + 200, center, 115],
+          [center, center - 240, 105],
+          [center, center + 240, 105]
+        ];
+        if (isChaos) {
+          iceCoords.push(
+            [center - 680, center - 220, 125],
+            [center + 680, center + 220, 125]
+          );
+        }
+        iceCoords.forEach(([x, y, r]) => state.iceZones.push({ x, y, r }));
+
+        state.vortices.push({ x: center, y: center, r: isChaos ? 175 : 135, strength: isChaos ? 140 : 95 });
+        if (isChaos) {
+          state.vortices.push(
+            { x: center - 650, y: center + 650, r: 150, strength: 120 },
+            { x: center + 650, y: center - 650, r: 150, strength: 120 }
+          );
+        }
+
+        state.lasers.push(
+          { x1: center - 450, y1: center - 120, x2: center - 450, y2: center + 120, phase: 0, active: false, warning: false },
+          { x1: center + 450, y1: center - 120, x2: center + 450, y2: center + 120, phase: 2.2, active: false, warning: false }
+        );
+        if (isChaos) {
+          state.lasers.push(
+            { x1: center - 130, y1: center - 430, x2: center + 130, y2: center - 430, phase: 1.1, active: false, warning: false },
+            { x1: center - 130, y1: center + 430, x2: center + 130, y2: center + 430, phase: 3.3, active: false, warning: false }
+          );
+        }
+      }
+
+      function createSnakeEntity(idx, name, team, isBot, color, skinId) {
+        const total = getEffectiveCompetitorCount();
+        const infinite = isInfiniteWorld();
+        let sx = 0;
+        let sy = 0;
+        let heading = 0;
+
+        if (infinite) {
+          if (idx === state.localSlot) {
+            sx = 0;
+            sy = 0;
+            heading = 0;
+          } else {
+            const ang = ((idx - 1) / Math.max(1, total - 1)) * Math.PI * 2;
+            const dist = 540 + idx * 75;
+            sx = Math.cos(ang) * dist;
+            sy = Math.sin(ang) * dist;
+            heading = ang + Math.PI * 0.85;
+          }
+        } else {
+          const angleSpawn = (idx / total) * Math.PI * 2;
+          const radius = 640;
+          sx = ARENA_SIZE / 2 + Math.cos(angleSpawn) * radius;
+          sy = ARENA_SIZE / 2 + Math.sin(angleSpawn) * radius;
+          heading = angleSpawn + Math.PI;
+        }
+
+        const segments = [];
+        const initLen = 15;
+        for (let i = 0; i < initLen; i++) {
+          segments.push({
+            x: sx - Math.cos(heading) * i * 7.2,
+            y: sy - Math.sin(heading) * i * 7.2
+          });
+        }
+
+        return {
+          id: idx,
+          name,
+          team,
+          isBot,
+          color,
+          skin: skinId,
+          alive: true,
+          respawnTimer: 0,
+          x: sx,
+          y: sy,
+          minX: sx - 120,
+          maxX: sx + 120,
+          minY: sy - 120,
+          maxY: sy + 120,
+          angle: heading,
+          targetAngle: heading,
+          boosting: false,
+          length: initLen,
+          score: 100,
+          segments,
+          magnetTimer: 0,
+          shieldTimer: 0,
+          overdriveTimer: 0,
+          ghostTimer: 0,
+          frozenTimer: 0,
+          aiTimer: 0
+        };
+      }
+
+      function spawnOrb(x = null, y = null, value = 10, bonus = false, color = null) {
+        if (state.orbs.length >= MAX_ORBS + 35) return;
+        const margin = 80;
+        const me = state.snakes[state.localSlot];
+        let ox = x;
+        let oy = y;
+
+        if (ox === null || oy === null) {
+          if (isInfiniteWorld() && me) {
+            const ang = Math.random() * Math.PI * 2;
+            const dist = 260 + Math.random() * 1400;
+            ox = me.x + Math.cos(ang) * dist;
+            oy = me.y + Math.sin(ang) * dist;
+          } else {
+            ox = margin + Math.random() * (ARENA_SIZE - margin * 2);
+            oy = margin + Math.random() * (ARENA_SIZE - margin * 2);
+          }
+        }
+
+        state.orbs.push({
+          x: ox,
+          y: oy,
+          value,
+          bonus,
+          r: bonus ? 8.5 : 5.2,
+          color: color || (bonus ? '#facc15' : ['#38bdf8', '#f472b6', '#4ade80', '#c084fc', '#fb923c'][Math.floor(Math.random() * 5)]),
+          pulse: Math.random() * Math.PI * 2
+        });
+      }
+
+      function spawnSpecialItemAt(px, py) {
+        if (state.powerups.length >= 8) return;
+        const spec = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+        state.powerups.push({
+          x: px,
+          y: py,
+          kind: spec.kind,
+          icon: spec.icon,
+          name: spec.name,
+          color: spec.color,
+          r: 16,
+          pulse: Math.random() * Math.PI * 2
+        });
+      }
+
+      function spawnSpecialItem() {
+        if (state.powerups.length >= 7) return;
+        const me = state.snakes[state.localSlot];
+        if (isInfiniteWorld() && me) {
+          const ang = me.angle + (Math.random() - 0.5) * 2.6;
+          const dist = 380 + Math.random() * 950;
+          spawnSpecialItemAt(me.x + Math.cos(ang) * dist, me.y + Math.sin(ang) * dist);
+        } else {
+          const margin = 150;
+          spawnSpecialItemAt(
+            margin + Math.random() * (ARENA_SIZE - margin * 2),
+            margin + Math.random() * (ARENA_SIZE - margin * 2)
+          );
+        }
+      }
+
+      function spawnParticle(x, y, vx, vy, color, life = 0.6) {
+        if (state.particles.length >= MAX_PARTICLES) return;
+        state.particles.push({ x, y, vx, vy, color, life });
+      }
+
+      function startArenaMatch() {
+        sfx.init();
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+        resetInputState();
+        state.paused = false;
+        document.getElementById('modal-pause').classList.add('hidden');
+
+        // Garante uma cobra para cada convidado conectado, mesmo no Solo 2P
+        const remoteSlots = Object.values(state.remotePeers).map(rp => rp.slot);
+        const total = Math.min(6, Math.max(getEffectiveCompetitorCount(), ...remoteSlots.map(s => s + 1)));
+        const palette = THEMES[state.theme];
+        state.snakes = [];
+        state.orbs = [];
+        state.powerups = [];
+        state.pillars = [];
+        state.iceZones = [];
+        state.vortices = [];
+        state.lasers = [];
+        state.shockwaves = [];
+        state.particles = [];
+        state.generatedChunks.clear();
+        state.timeLeft = ROUND_DURATION;
+        state.endlessWave = 1;
+        state.isNewRecord = false;
+        state.lastDeathCause = '';
+
+        const remoteBySlot = {};
+        Object.values(state.remotePeers).forEach(rp => {
+          remoteBySlot[rp.slot] = rp;
+        });
+
+        const altColors = SNAKE_COLORS.map(c => c.hex).filter(h => h !== state.selectedColor);
+
+        for (let i = 0; i < total; i++) {
+          let team = null;
+          let color = i === state.localSlot ? state.selectedColor : altColors[i % altColors.length];
+          let skinId = i === state.localSlot ? state.selectedSkin : SKINS[i % SKINS.length].id;
+
+          if (state.mode === '2v2' || state.mode === '3v3') {
+            team = i % 2 === 0 ? 'A' : 'B';
+            color = i === state.localSlot
+              ? state.selectedColor
+              : (team === 'A' ? palette.teamAColor : palette.teamBColor);
+          }
+
+          let name = '';
+          let isBot = true;
+          if (i === state.localSlot) {
+            name = state.playerName;
+            isBot = false;
+          } else if (remoteBySlot[i]) {
+            name = remoteBySlot[i].name;
+            skinId = remoteBySlot[i].skin;
+            color = remoteBySlot[i].color;
+            isBot = false;
+          } else {
+            const allyTag = team ? (team === 'A' ? ' (Aliado)' : ' (Rival)') : '';
+            name = `${BOT_NAMES[i % BOT_NAMES.length]}${allyTag}`;
+            isBot = true;
+          }
+
+          state.snakes.push(createSnakeEntity(i, name, team, isBot, color, skinId));
+        }
+
+        const me = state.snakes[state.localSlot];
+        if (me) {
+          state.camera.x = me.x;
+          state.camera.y = me.y;
+        }
+
+        if (isInfiniteWorld()) {
+          streamInfiniteWorldAround(0, 0);
+        } else {
+          buildBoundedArenaHazards();
+          for (let i = 0; i < MAX_ORBS; i++) {
+            spawnOrb(null, null, i % 11 === 0 ? 25 : 10, i % 11 === 0);
+          }
+          for (let i = 0; i < 6; i++) spawnSpecialItem();
+        }
+
+        state.phase = 'playing';
+        document.getElementById('lobby-screen').classList.add('hidden');
+        document.getElementById('modal-gameover').classList.add('hidden');
+        document.getElementById('respawn-banner').classList.add('hidden');
+        document.getElementById('hud-overlay').classList.remove('hidden');
+        applyHudModeLayout();
+        updateHUD();
+      }
+
+      /* Ajusta HUD conforme o modo (usado pelo anfitrião e pelos convidados) */
+      function applyHudModeLayout() {
+        const infinite = isInfiniteWorld();
+        const total = state.snakes.length || getEffectiveCompetitorCount();
+        const modeTag = infinite ? '♾️ MAPA INFINITO' : (state.mode === 'solo' ? `SOLO (${total})` : state.mode.toUpperCase());
+        const diffTag = DIFFICULTY_CFG[state.botDifficulty].label.toUpperCase();
+        document.getElementById('hud-mode-tag').textContent = `${modeTag} • ${diffTag}`;
+
+        const bestBox = document.getElementById('hud-best-box');
+        const coordsRow = document.getElementById('hud-coords-row');
+        const miniShell = document.getElementById('minimap-shell');
+        bestBox.classList.toggle('hidden', !infinite);
+        coordsRow.classList.toggle('hidden', !infinite);
+        miniShell.style.borderRadius = infinite ? '999px' : '14px';
+        miniCanvas.style.borderRadius = infinite ? '999px' : '10px';
+
+        document.getElementById('btn-hud-fullscreen').classList.toggle('hidden', !document.fullscreenEnabled);
+        renderAvatarSlots();
+      }
+
+      /* -----------------------------------------------------------------------
+         7. FÍSICA, COLISÕES & ECOLOGIA DINÂMICA NO MUNDO INFINITO
+         ----------------------------------------------------------------------- */
+      function normalizeAngle(a) {
+        while (a > Math.PI) a -= Math.PI * 2;
+        while (a < -Math.PI) a += Math.PI * 2;
+        return a;
+      }
+
+      function turnTowards(current, target, maxStep) {
+        const diff = normalizeAngle(target - current);
+        if (Math.abs(diff) <= maxStep) return target;
+        return normalizeAngle(current + Math.sign(diff) * maxStep);
+      }
+
+      function pointToSegmentDist(px, py, x1, y1, x2, y2) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const lenSq = dx * dx + dy * dy;
+        let t = lenSq === 0 ? 0 : ((px - x1) * dx + (py - y1) * dy) / lenSq;
+        t = Math.max(0, Math.min(1, t));
+        return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+      }
+
+      function computeBotSteering(bot, dt) {
+        const diff = DIFFICULTY_CFG[state.botDifficulty];
+        const infinite = isInfiniteWorld();
+        const me = state.snakes[state.localSlot];
+        bot.aiTimer -= dt;
+
+        const lookAhead = diff.lookAhead;
+        const probeAngles = [0, -0.45, 0.45, -0.95, 0.95, -1.5, 1.5, -2.1, 2.1];
+
+        const isDangerousPoint = (px, py) => {
+          if (!infinite && (px < 52 || px > ARENA_SIZE - 52 || py < 52 || py > ARENA_SIZE - 52)) {
+            return true;
+          }
+          if (bot.ghostTimer > 0) return false;
+
+          for (let i = 0; i < state.pillars.length; i++) {
+            const pil = state.pillars[i];
+            if (Math.hypot(px - pil.x, py - pil.y) < pil.r + 24) return true;
+          }
+
+          for (let i = 0; i < state.lasers.length; i++) {
+            const lz = state.lasers[i];
+            if (lz.active || (diff.huntPowerups && lz.warning)) {
+              if (pointToSegmentDist(px, py, lz.x1, lz.y1, lz.x2, lz.y2) < 26) return true;
+            }
+          }
+
+          if (state.botDifficulty === 'hard' || state.botDifficulty === 'insane') {
+            for (let i = 0; i < state.iceZones.length; i++) {
+              const ice = state.iceZones[i];
+              if (Math.hypot(px - ice.x, py - ice.y) < ice.r + 12) return true;
+            }
+          }
+
+          if (bot.shieldTimer > 0) return false;
+
+          for (let i = 0; i < state.snakes.length; i++) {
+            const other = state.snakes[i];
+            if (!other.alive || other.id === bot.id || other.ghostTimer > 0) continue;
+            if (bot.team && other.team === bot.team) continue;
+            if (px < other.minX - 32 || px > other.maxX + 32 || py < other.minY - 32 || py > other.maxY + 32) continue;
+
+            for (let s = 0; s < other.segments.length; s += 2) {
+              const seg = other.segments[s];
+              if (Math.hypot(px - seg.x, py - seg.y) < 30) return true;
+            }
+          }
+          return false;
+        };
+
+        const forwardDanger = isDangerousPoint(
+          bot.x + Math.cos(bot.angle) * lookAhead,
+          bot.y + Math.sin(bot.angle) * lookAhead
+        );
+
+        if (forwardDanger) {
+          bot.boosting = false;
+          for (let i = 0; i < probeAngles.length; i++) {
+            const testAng = normalizeAngle(bot.angle + probeAngles[i]);
+            if (!isDangerousPoint(bot.x + Math.cos(testAng) * lookAhead, bot.y + Math.sin(testAng) * lookAhead)) {
+              bot.targetAngle = testAng;
+              return;
+            }
+          }
+          bot.targetAngle = normalizeAngle(bot.angle + 2.3);
+          return;
+        }
+
+        if (bot.aiTimer <= 0) {
+          bot.aiTimer = diff.reactionInterval * (0.85 + Math.random() * 0.3);
+
+          if (infinite && me && me.alive && Math.hypot(bot.x - me.x, bot.y - me.y) > 1600) {
+            bot.targetAngle = Math.atan2(me.y - bot.y, me.x - bot.x);
+            bot.boosting = false;
+            return;
+          }
+
+          if (diff.predictive && bot.length > 18 && bot.frozenTimer <= 0) {
+            for (let i = 0; i < state.snakes.length; i++) {
+              const target = state.snakes[i];
+              if (!target.alive || target.id === bot.id) continue;
+              if (bot.team && target.team === bot.team) continue;
+              const d = Math.hypot(target.x - bot.x, target.y - bot.y);
+              if (d > 110 && d < 360) {
+                const cutX = target.x + Math.cos(target.angle) * 115;
+                const cutY = target.y + Math.sin(target.angle) * 115;
+                if (!isDangerousPoint(cutX, cutY)) {
+                  bot.targetAngle = Math.atan2(cutY - bot.y, cutX - bot.x);
+                  bot.boosting = Math.random() < diff.boostChance;
+                  return;
+                }
+              }
+            }
+          }
+
+          if (diff.huntPowerups) {
+            let bestPw = null;
+            let bestPwDist = 480;
+            for (let i = 0; i < state.powerups.length; i++) {
+              const pw = state.powerups[i];
+              const d = Math.hypot(pw.x - bot.x, pw.y - bot.y);
+              if (d < bestPwDist) {
+                bestPwDist = d;
+                bestPw = pw;
+              }
+            }
+            if (bestPw) {
+              bot.targetAngle = Math.atan2(bestPw.y - bot.y, bestPw.x - bot.x);
+              bot.boosting = bestPwDist < 220 && bot.length > 16 && Math.random() < diff.boostChance;
+              return;
+            }
+          }
+
+          let bestOrb = null;
+          let bestScore = -Infinity;
+          for (let i = 0; i < state.orbs.length; i += 2) {
+            const o = state.orbs[i];
+            const dist = Math.hypot(o.x - bot.x, o.y - bot.y);
+            if (dist < 460) {
+              const score = (o.value * 4.5) - dist;
+              if (score > bestScore) {
+                bestScore = score;
+                bestOrb = o;
+              }
+            }
+          }
+
+          if (bestOrb) {
+            bot.targetAngle = Math.atan2(bestOrb.y - bot.y, bestOrb.x - bot.x);
+            bot.boosting = bestOrb.bonus && bot.length > 18 && Math.hypot(bestOrb.x - bot.x, bestOrb.y - bot.y) < 180 && Math.random() < diff.boostChance;
+          } else {
+            const wanderBase = (infinite && me)
+              ? Math.atan2(me.y - bot.y, me.x - bot.x)
+              : Math.atan2(ARENA_SIZE / 2 - bot.y, ARENA_SIZE / 2 - bot.x);
+            bot.targetAngle = normalizeAngle(wanderBase + (Math.random() - 0.5) * 1.3);
+            bot.boosting = false;
+          }
+        }
+      }
+
+      function applySpecialItem(snake, item) {
+        const isLocal = snake.id === state.localSlot;
+        if (isLocal) sfx.powerup();
+
+        switch (item.kind) {
+          case 'magnet':
+            snake.magnetTimer = 8.0;
+            if (isLocal) showToast('🧲 Ímã Cósmico (8s)!');
+            break;
+          case 'shield':
+            snake.shieldTimer = 7.0;
+            if (isLocal) showToast('🛡️ Escudo de Fase (7s)!');
+            break;
+          case 'overdrive':
+            snake.overdriveTimer = 6.0;
+            if (isLocal) showToast('⚡ Turbo Infinito (6s)!');
+            break;
+          case 'ghost':
+            snake.ghostTimer = 6.0;
+            if (isLocal) showToast('👻 Forma Espectral (6s)!');
+            break;
+          case 'crystal':
+            snake.score += 60;
+            snake.length = Math.min(MAX_VISUAL_SEGMENTS, snake.length + 5);
+            if (isLocal) {
+              sfx.eat(true);
+              showToast('💎 Mega Cristal (+60 Massa)!');
+            }
+            for (let i = 0; i < 14; i++) {
+              const a = (i / 14) * Math.PI * 2;
+              spawnParticle(snake.x, snake.y, Math.cos(a) * 150, Math.sin(a) * 150, '#e879f9', 0.55);
+            }
+            break;
+          case 'freeze':
+            if (isLocal) {
+              sfx.freezePulse();
+              showToast('❄️ Nova Glacial! Inimigos Congelados!');
+            }
+            state.shockwaves.push({ x: snake.x, y: snake.y, r: 20, maxR: 540, life: 0.65 });
+            for (let i = 0; i < state.snakes.length; i++) {
+              const other = state.snakes[i];
+              if (!other.alive || other.id === snake.id) continue;
+              if (snake.team && other.team === snake.team) continue;
+              if (other.shieldTimer > 0) continue;
+              if (Math.hypot(other.x - snake.x, other.y - snake.y) <= 540) {
+                other.frozenTimer = 3.5;
+                if (other.id === state.localSlot) {
+                  sfx.freezePulse();
+                  showToast('🥶 Você foi congelado por uma Nova Glacial!');
+                }
+              }
+            }
+            break;
+        }
+      }
+
+      function eliminateSnake(snake, killerName = null, hazardReason = null) {
+        if (!snake.alive) return;
+        snake.alive = false;
+        snake.respawnTimer = isInfiniteWorld() ? 1.5 : 3.0;
+        snake.boosting = false;
+
+        const dropStep = Math.max(2, Math.ceil(snake.segments.length / 18));
+        for (let i = 0; i < snake.segments.length; i += dropStep) {
+          const seg = snake.segments[i];
+          spawnOrb(
+            seg.x + (Math.random() - 0.5) * 14,
+            seg.y + (Math.random() - 0.5) * 14,
+            15,
+            true,
+            snake.color
+          );
+        }
+
+        for (let i = 0; i < 16; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const sp = 60 + Math.random() * 190;
+          spawnParticle(snake.x, snake.y, Math.cos(a) * sp, Math.sin(a) * sp, snake.color, 0.55);
+        }
+
+        if (snake.id === state.localSlot) {
+          sfx.crash();
+          state.lastDeathCause = killerName
+            ? `${killerName} te cercou`
+            : (hazardReason ? `Você ${hazardReason}` : 'Você foi eliminado');
+          if (isInfiniteWorld()) {
+            state.isNewRecord = saveEndlessBest(snake.score) || state.isNewRecord;
+            finishRound();
+            return;
+          }
+          document.getElementById('respawn-reason').textContent = `${state.lastDeathCause}!`;
+          document.getElementById('respawn-banner').classList.remove('hidden');
+        } else if (killerName) {
+          showToast(`💥 ${killerName} cercou ${snake.name}!`);
+        } else if (hazardReason) {
+          showToast(`⚠️ ${snake.name} ${hazardReason}!`);
+        }
+      }
+
+      function respawnSnake(snake) {
+        const me = state.snakes[state.localSlot];
+        const aliveAlly = snake.team
+          ? state.snakes.find(s => s.alive && s.id !== snake.id && s.team === snake.team)
+          : null;
+
+        const pos = findSafeSpawn(aliveAlly, me);
+        const heading = (isInfiniteWorld() && me)
+          ? Math.atan2(me.y - pos.y, me.x - pos.x) + (Math.random() - 0.5) * 0.8
+          : Math.atan2(ARENA_SIZE / 2 - pos.y, ARENA_SIZE / 2 - pos.x);
+
+        const waveBonusLen = isInfiniteWorld() ? Math.min(22, (state.endlessWave - 1) * 2) : 0;
+        const initLen = 15 + waveBonusLen;
+
+        snake.alive = true;
+        snake.x = pos.x;
+        snake.y = pos.y;
+        snake.minX = pos.x - 140;
+        snake.maxX = pos.x + 140;
+        snake.minY = pos.y - 140;
+        snake.maxY = pos.y + 140;
+        snake.angle = heading;
+        snake.targetAngle = heading;
+        snake.length = initLen;
+        if (isInfiniteWorld()) snake.score = 100 + waveBonusLen * 15;
+        snake.shieldTimer = 2.5;
+        snake.magnetTimer = 0;
+        snake.overdriveTimer = 0;
+        snake.ghostTimer = 0;
+        snake.frozenTimer = 0;
+        snake.segments = [];
+        for (let i = 0; i < initLen; i++) {
+          snake.segments.push({
+            x: pos.x - Math.cos(heading) * i * 7.2,
+            y: pos.y - Math.sin(heading) * i * 7.2
+          });
+        }
+
+        if (snake.id === state.localSlot) {
+          document.getElementById('respawn-banner').classList.add('hidden');
+          showToast('🛡️ De volta com Escudo Temporário!');
+        }
+      }
+
+      let syncTick = 0;
+      let uiTick = 0;
+      let streamTick = 0;
+
+      let inputSendTick = 0;
+
+      function updateArenaSimulation(dt, nowSec) {
+        if (state.paused) return;
+        for (let i = state.particles.length - 1; i >= 0; i--) {
+          const p = state.particles[i];
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.life -= dt;
+          if (p.life <= 0) state.particles.splice(i, 1);
+        }
+
+        for (let i = state.shockwaves.length - 1; i >= 0; i--) {
+          const sw = state.shockwaves[i];
+          sw.r += (sw.maxR - sw.r) * Math.min(1, dt * 7);
+          sw.life -= dt;
+          if (sw.life <= 0) state.shockwaves.splice(i, 1);
+        }
+
+        if (state.phase !== 'playing') return;
+
+        const infinite = isInfiniteWorld();
+
+        const localSnake = state.snakes[state.localSlot];
+        if (localSnake && localSnake.alive) {
+          const kx = (state.input.keys.right ? 1 : 0) - (state.input.keys.left ? 1 : 0);
+          const ky = (state.input.keys.down ? 1 : 0) - (state.input.keys.up ? 1 : 0);
+          if (kx !== 0 || ky !== 0) {
+            state.input.targetAngle = Math.atan2(ky, kx);
+          }
+          if (state.input.targetAngle !== null) {
+            localSnake.targetAngle = state.input.targetAngle;
+          }
+          localSnake.boosting = (isBoostInputActive() || localSnake.overdriveTimer > 0) && (localSnake.length > 12 || localSnake.overdriveTimer > 0);
+
+          // Convidado: envia comandos ~20x/s em vez de a cada frame
+          inputSendTick += dt;
+          if (!state.isHost && inputSendTick >= 0.05) {
+            inputSendTick = 0;
+            sendNet({ type: 'PEER_INPUT', angle: localSnake.targetAngle, boosting: localSnake.boosting });
+          }
+        }
+
+        if (!state.isHost) {
+          uiTick += dt;
+          if (uiTick >= 0.2) {
+            uiTick = 0;
+            updateHUD();
+          }
+          return;
+        }
+
+        if (infinite) {
+          const meWave = state.snakes[state.localSlot];
+          if (meWave && meWave.alive) {
+            // Só marca; gravação no localStorage acontece na morte/saída (não a cada frame)
+            if (meWave.score > state.endlessBest) state.isNewRecord = true;
+            const nextWave = Math.max(1, 1 + Math.floor((meWave.score - 100) / 250));
+            if (nextWave > state.endlessWave) {
+              state.endlessWave = nextWave;
+              sfx.powerup();
+              showToast(`♾️ ONDA ${state.endlessWave}! Novos desafios na névoa!`);
+              spawnSpecialItem();
+            }
+
+            streamTick += dt;
+            if (streamTick >= 0.35) {
+              streamTick = 0;
+              streamInfiniteWorldAround(meWave.x, meWave.y);
+
+              for (let b = 0; b < state.snakes.length; b++) {
+                const bot = state.snakes[b];
+                if (bot.isBot && bot.alive && Math.hypot(bot.x - meWave.x, bot.y - meWave.y) > 2400) {
+                  respawnSnake(bot);
+                }
+              }
+            }
+          }
+        } else {
+          state.timeLeft -= dt;
+          if (state.timeLeft <= 0) {
+            state.timeLeft = 0;
+            finishRound();
+            return;
+          }
+        }
+
+        for (let i = 0; i < state.lasers.length; i++) {
+          const lz = state.lasers[i];
+          const cycle = (nowSec + lz.phase) % 5.0;
+          lz.warning = cycle >= 2.3 && cycle < 3.5;
+          lz.active = cycle >= 3.5;
+        }
+
+        const segmentSpacing = 7.2;
+        const baseSpeed = 215;
+
+        for (let sIdx = 0; sIdx < state.snakes.length; sIdx++) {
+          const s = state.snakes[sIdx];
+          if (!s.alive) {
+            s.respawnTimer -= dt;
+            if (s.id === state.localSlot) {
+              document.getElementById('respawn-countdown').textContent = Math.max(1, Math.ceil(s.respawnTimer));
+            }
+            if (s.respawnTimer <= 0) respawnSnake(s);
+            continue;
+          }
+
+          if (s.shieldTimer > 0) s.shieldTimer -= dt;
+          if (s.magnetTimer > 0) s.magnetTimer -= dt;
+          if (s.overdriveTimer > 0) s.overdriveTimer -= dt;
+          if (s.ghostTimer > 0) s.ghostTimer -= dt;
+          if (s.frozenTimer > 0) s.frozenTimer -= dt;
+
+          // Zonas criogênicas
+          for (let i = 0; i < state.iceZones.length; i++) {
+            const ice = state.iceZones[i];
+            if (Math.hypot(s.x - ice.x, s.y - ice.y) < ice.r) {
+              if (s.frozenTimer <= 0.4 && s.shieldTimer <= 0) {
+                s.frozenTimer = 2.5;
+                if (s.id === state.localSlot) {
+                  sfx.freezePulse();
+                  showToast('❄️ CONGELADO! Velocidade reduzida!');
+                }
+              }
+              break;
+            }
+          }
+
+          // Vórtices gravitacionais
+          for (let i = 0; i < state.vortices.length; i++) {
+            const vx = state.vortices[i];
+            const dx = vx.x - s.x;
+            const dy = vx.y - s.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist > 14 && dist < vx.r) {
+              const pull = (1 - dist / vx.r) * vx.strength * dt;
+              s.x += (dx / dist) * pull;
+              s.y += (dy / dist) * pull;
+            }
+          }
+
+          if (s.isBot) {
+            computeBotSteering(s, dt);
+          }
+
+          const isFrozen = s.frozenTimer > 0;
+          const hasOverdrive = s.overdriveTimer > 0;
+          const isBoosting = !isFrozen && (hasOverdrive || (s.boosting && s.length > 12));
+
+          let speed = baseSpeed;
+          if (isFrozen) speed *= 0.45;
+          else if (hasOverdrive) speed *= 1.75;
+          else if (isBoosting) speed *= 1.6;
+
+          const diffMult = s.isBot ? DIFFICULTY_CFG[state.botDifficulty].turnMult : 1.0;
+          const turnRate = (isFrozen ? 2.1 : (isBoosting ? 3.5 : 4.3)) * diffMult;
+
+          s.angle = turnTowards(s.angle, s.targetAngle, turnRate * dt);
+          s.x += Math.cos(s.angle) * speed * dt;
+          s.y += Math.sin(s.angle) * speed * dt;
+
+          if (isBoosting && !hasOverdrive) {
+            s.length = Math.max(12, s.length - dt * 2.1);
+            if (Math.random() < 0.2) {
+              const tail = s.segments[s.segments.length - 1];
+              if (tail) spawnOrb(tail.x, tail.y, 4, false, s.color);
+            }
+          }
+
+          s.segments.unshift({ x: s.x, y: s.y });
+          let minX = s.x, maxX = s.x, minY = s.y, maxY = s.y;
+
+          for (let i = 1; i < s.segments.length; i++) {
+            const prev = s.segments[i - 1];
+            const curr = s.segments[i];
+            const dx = curr.x - prev.x;
+            const dy = curr.y - prev.y;
+            const d = Math.hypot(dx, dy);
+            if (d > segmentSpacing) {
+              curr.x = prev.x + (dx / d) * segmentSpacing;
+              curr.y = prev.y + (dy / d) * segmentSpacing;
+            }
+            if (curr.x < minX) minX = curr.x;
+            if (curr.x > maxX) maxX = curr.x;
+            if (curr.y < minY) minY = curr.y;
+            if (curr.y > maxY) maxY = curr.y;
+          }
+
+          s.minX = minX;
+          s.maxX = maxX;
+          s.minY = minY;
+          s.maxY = maxY;
+
+          const targetSegCount = Math.min(MAX_VISUAL_SEGMENTS, Math.floor(s.length));
+          if (s.segments.length > targetSegCount) {
+            s.segments.length = targetSegCount;
+          }
+
+          const headR = 13;
+          if (!infinite && (s.x < headR || s.x > ARENA_SIZE - headR || s.y < headR || s.y > ARENA_SIZE - headR)) {
+            eliminateSnake(s, null, 'bateu na parede');
+            continue;
+          }
+
+          if (s.ghostTimer <= 0) {
+            let hitPillar = false;
+            for (let i = 0; i < state.pillars.length; i++) {
+              const pil = state.pillars[i];
+              if (Math.hypot(s.x - pil.x, s.y - pil.y) < pil.r + headR - 2) {
+                if (s.shieldTimer > 0) {
+                  s.shieldTimer = 0;
+                  s.angle = normalizeAngle(s.angle + Math.PI);
+                  s.targetAngle = s.angle;
+                  s.x += Math.cos(s.angle) * 28;
+                  s.y += Math.sin(s.angle) * 28;
+                  if (s.id === state.localSlot) {
+                    sfx.shieldBlock();
+                    showToast('🛡️ Escudo absorveu o impacto!');
+                  }
+                } else {
+                  eliminateSnake(s, null, 'colidiu em um pilar');
+                  hitPillar = true;
+                }
+                break;
+              }
+            }
+            if (hitPillar) continue;
+          }
+
+          if (s.ghostTimer <= 0) {
+            let hitLaser = false;
+            for (let i = 0; i < state.lasers.length; i++) {
+              const lz = state.lasers[i];
+              if (lz.active && pointToSegmentDist(s.x, s.y, lz.x1, lz.y1, lz.x2, lz.y2) < headR + 4) {
+                if (s.shieldTimer > 0) {
+                  s.shieldTimer = 0;
+                  // Janela de invulnerabilidade para atravessar o feixe (senão morre no frame seguinte)
+                  s.ghostTimer = Math.max(s.ghostTimer, 0.6);
+                  if (s.id === state.localSlot) {
+                    sfx.shieldBlock();
+                    showToast('🛡️ Escudo bloqueou o Laser!');
+                  }
+                } else {
+                  eliminateSnake(s, null, 'cruzou um feixe laser');
+                  hitLaser = true;
+                }
+                break;
+              }
+            }
+            if (hitLaser) continue;
+          }
+
+          const eatRadius = s.magnetTimer > 0 ? 105 : 23;
+          for (let i = state.orbs.length - 1; i >= 0; i--) {
+            const o = state.orbs[i];
+            const dist = Math.hypot(o.x - s.x, o.y - s.y);
+            if (s.magnetTimer > 0 && dist < 155 && dist > 18) {
+              o.x += ((s.x - o.x) / dist) * 350 * dt;
+              o.y += ((s.y - o.y) / dist) * 350 * dt;
+            }
+            if (dist < eatRadius) {
+              s.score += o.value;
+              s.length = Math.min(MAX_VISUAL_SEGMENTS, s.length + (o.bonus ? 1.4 : 0.45));
+              if (s.id === state.localSlot) sfx.eat(o.bonus);
+              state.orbs.splice(i, 1);
+            }
+          }
+
+          for (let i = state.powerups.length - 1; i >= 0; i--) {
+            const pw = state.powerups[i];
+            if (Math.hypot(pw.x - s.x, pw.y - s.y) < 28) {
+              applySpecialItem(s, pw);
+              state.powerups.splice(i, 1);
+            }
+          }
+        }
+
+        for (let aIdx = 0; aIdx < state.snakes.length; aIdx++) {
+          const attacker = state.snakes[aIdx];
+          if (!attacker.alive || attacker.ghostTimer > 0) continue;
+
+          for (let dIdx = 0; dIdx < state.snakes.length; dIdx++) {
+            const defender = state.snakes[dIdx];
+            if (!defender.alive || defender.id === attacker.id || defender.ghostTimer > 0) continue;
+            if (attacker.team && defender.team === attacker.team) continue;
+
+            if (
+              attacker.x < defender.minX - 20 ||
+              attacker.x > defender.maxX + 20 ||
+              attacker.y < defender.minY - 20 ||
+              attacker.y > defender.maxY + 20
+            ) continue;
+
+            for (let idx = 2; idx < defender.segments.length; idx++) {
+              const seg = defender.segments[idx];
+              if (Math.hypot(attacker.x - seg.x, attacker.y - seg.y) < 17) {
+                if (attacker.shieldTimer > 0) {
+                  attacker.shieldTimer = 0;
+                  attacker.ghostTimer = 1.2;
+                  if (attacker.id === state.localSlot) {
+                    sfx.shieldBlock();
+                    showToast('🛡️ Escudo salvou você!');
+                  }
+                } else {
+                  defender.score += 60;
+                  eliminateSnake(attacker, defender.name, null);
+                }
+                break;
+              }
+            }
+            if (!attacker.alive) break;
+          }
+        }
+
+        while (state.orbs.length < MAX_ORBS) {
+          spawnOrb(null, null, Math.random() < 0.08 ? 25 : 10, Math.random() < 0.08);
+        }
+        if (state.powerups.length < 6 && Math.random() < 0.03) {
+          spawnSpecialItem();
+        }
+
+        uiTick += dt;
+        if (uiTick >= 0.2) {
+          uiTick = 0;
+          updateHUD();
+        }
+
+        syncTick += dt;
+        // Só sincroniza se houver convidados (antes enviava sempre, mesmo jogando sozinho)
+        if (syncTick >= 0.06 && hasRemotePeers()) {
+          syncTick = 0;
+          broadcastSnapshot();
+        }
+      }
+
+      function updateHUD() {
+        const timerEl = document.getElementById('hud-timer');
+        const infinite = isInfiniteWorld();
+
+        if (infinite) {
+          timerEl.textContent = `♾️ ONDA ${state.endlessWave}`;
+        } else {
+          const mins = Math.floor(state.timeLeft / 60);
+          const secs = Math.floor(state.timeLeft % 60);
+          timerEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        const me = state.snakes[state.localSlot];
+        if (me) {
+          document.getElementById('hud-my-score').textContent = me.score;
+          if (infinite) {
+            document.getElementById('hud-best-score').textContent = Math.max(state.endlessBest, me.score);
+            const coordsVal = document.getElementById('hud-coords-val');
+            if (coordsVal) {
+              coordsVal.textContent = `X: ${Math.round(me.x / 10)} · Y: ${Math.round(-me.y / 10)}`;
+            }
+          }
+
+          const buffsEl = document.getElementById('hud-active-buffs');
+          const pills = [];
+          if (me.frozenTimer > 0) pills.push(`<span class="soft-box" style="padding:4px 8px; font-size:10px; font-weight:900; border-color:#38bdf8;">❄️ CONGELADO ${me.frozenTimer.toFixed(1)}s</span>`);
+          if (me.shieldTimer > 0) pills.push(`<span class="soft-box" style="padding:4px 8px; font-size:10px; font-weight:800;">🛡️ Escudo ${Math.ceil(me.shieldTimer)}s</span>`);
+          if (me.magnetTimer > 0) pills.push(`<span class="soft-box" style="padding:4px 8px; font-size:10px; font-weight:800;">🧲 Ímã ${Math.ceil(me.magnetTimer)}s</span>`);
+          if (me.overdriveTimer > 0) pills.push(`<span class="soft-box" style="padding:4px 8px; font-size:10px; font-weight:800;">⚡ Turbo ${Math.ceil(me.overdriveTimer)}s</span>`);
+          if (me.ghostTimer > 0) pills.push(`<span class="soft-box" style="padding:4px 8px; font-size:10px; font-weight:800;">👻 Espectral ${Math.ceil(me.ghostTimer)}s</span>`);
+          buffsEl.innerHTML = pills.join('');
+        }
+
+        const lbEl = document.getElementById('hud-leaderboard');
+        if (state.mode === '2v2' || state.mode === '3v3') {
+          const t = getTeamScores();
+          lbEl.innerHTML = `
+            <div style="display:flex; justify-content:space-between; font-weight:900;">
+              <span style="color:${t.myColor}">● Sua Equipe</span>
+              <span>${t.mine}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-weight:900;">
+              <span style="color:${t.rivalColor}">● Equipe Rival</span>
+              <span>${t.rival}</span>
+            </div>
+          `;
+        } else {
+          const ranked = [...state.snakes].sort((a, b) => b.score - a.score).slice(0, 4);
+          lbEl.innerHTML = ranked.map((s, i) => {
+            const isMe = s.id === state.localSlot;
+            const nameColor = state.theme === 'nokia' ? '#0f380f' : (state.theme === 'notebook' ? '#1d4ed8' : safeColor(s.color, '#ffffff'));
+            const avatar = isMe && state.profile ? avatarMarkup(state.profile.avatar, 16) : '';
+            return `
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; font-weight:${isMe ? '900' : '600'};">
+              <span style="display:flex; align-items:center; gap:4px; min-width:0;">${avatar}<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:${nameColor}">${i + 1}. ${escapeHTML(s.name)}</span></span>
+              <span>${Number(s.score) || 0}</span>
+            </div>`;
+          }).join('');
+        }
+      }
+
+      /* Placar por equipe do ponto de vista do jogador local (anfitrião ou convidado) */
+      function getTeamScores() {
+        const me = state.snakes[state.localSlot];
+        const myTeam = (me && me.team) || 'A';
+        const pal = THEMES[state.theme];
+        const sum = (team) => state.snakes.filter(s => s.team === team).reduce((acc, s) => acc + (Number(s.score) || 0), 0);
+        return {
+          mine: sum(myTeam),
+          rival: sum(myTeam === 'A' ? 'B' : 'A'),
+          myColor: myTeam === 'A' ? pal.teamAColor : pal.teamBColor,
+          rivalColor: myTeam === 'A' ? pal.teamBColor : pal.teamAColor
+        };
+      }
+
+      function didLocalPlayerWin() {
+        if (state.mode === '2v2' || state.mode === '3v3') {
+          const t = getTeamScores();
+          return t.mine >= t.rival;
+        }
+        const sorted = [...state.snakes].sort((a, b) => b.score - a.score);
+        return !!sorted[0] && sorted[0].id === state.localSlot;
+      }
+
+      function finishRound() {
+        state.phase = 'gameover';
+        // Modo infinito: fim = morte (o som de batida já tocou). Arena: vitória ou derrota.
+        if (!isInfiniteWorld()) {
+          if (didLocalPlayerWin()) sfx.win();
+          else sfx.lose();
+        }
+        if (state.isHost && hasRemotePeers()) broadcastSnapshot();
+        openGameOverModal();
+      }
+
+      function openGameOverModal() {
+        state.paused = false;
+        document.getElementById('modal-pause').classList.add('hidden');
+        document.getElementById('respawn-banner').classList.add('hidden');
+        const winnerEl = document.getElementById('gameover-winner');
+        const rankEl = document.getElementById('gameover-ranking');
+        const row = (label, value, weight = 900) =>
+          `<div style="display:flex; justify-content:space-between; gap:10px; font-weight:${weight};"><span>${label}</span><span>${value}</span></div>`;
+
+        if (isInfiniteWorld()) {
+          const me = state.snakes[state.localSlot];
+          const finalScore = me ? me.score : 100;
+          const coords = me ? `X: ${Math.round(me.x / 10)}, Y: ${Math.round(-me.y / 10)}` : 'X: 0, Y: 0';
+          winnerEl.textContent = state.isNewRecord ? '🎉 Novo Recorde!' : 'Fim da Exploração';
+          rankEl.innerHTML =
+            row('Sua Massa Final:', `${Number(finalScore) || 0} pts`) +
+            row('🏆 Recorde Pessoal:', `${state.endlessBest} pts`) +
+            row('Onda / Coordenadas:', `Onda ${state.endlessWave} (${coords})`, 700) +
+            (state.lastDeathCause ? row('Causa:', escapeHTML(state.lastDeathCause), 700) : '');
+        } else if (state.mode === '2v2' || state.mode === '3v3') {
+          const t = getTeamScores();
+          winnerEl.textContent = t.mine >= t.rival ? 'Sua Equipe Venceu!' : 'Equipe Rival Venceu!';
+          rankEl.innerHTML = row('Sua Equipe:', `${t.mine} pts`) + row('Equipe Rival:', `${t.rival} pts`);
+        } else {
+          const sorted = [...state.snakes].sort((a, b) => b.score - a.score);
+          winnerEl.textContent = sorted[0] ? `${sorted[0].name} Venceu!` : 'Fim da Rodada';
+          rankEl.innerHTML = sorted.map((s, i) => `
+            <div style="display:flex; justify-content:space-between; font-weight:800; ${s.id === state.localSlot ? 'text-decoration:underline;' : ''}">
+              <span>#${i + 1} ${escapeHTML(s.name)}</span>
+              <span>${Number(s.score) || 0} pts</span>
+            </div>
+          `).join('');
+        }
+
+        // Convidado não reinicia a partida: só o anfitrião
+        document.getElementById('btn-play-again').textContent = state.isHost ? 'Jogar Novamente' : 'Aguardando anfitrião…';
+        document.getElementById('modal-gameover').classList.remove('hidden');
+      }
+
+      /* -----------------------------------------------------------------------
+         8. RENDERIZAÇÃO DO MUNDO INFINITO, 7 TEMAS & RADAR CIRCULAR
+         ----------------------------------------------------------------------- */
+      const canvas = document.getElementById('arena-canvas');
+      const ctx = canvas.getContext('2d');
+      const miniCanvas = document.getElementById('minimap-canvas');
+      const miniCtx = miniCanvas.getContext('2d');
+      const previewCanvas = document.getElementById('skin-preview-canvas');
+      const previewCtx = previewCanvas.getContext('2d');
+
+      let viewW = 800;
+      let viewH = 600;
+      let dpr = 1;
+
+      function resizeArenaCanvas() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        viewW = window.innerWidth;
+        viewH = window.innerHeight;
+        canvas.width = Math.round(viewW * dpr);
+        canvas.height = Math.round(viewH * dpr);
+
+        if (state.plankton.length === 0) {
+          for (let i = 0; i < 36; i++) {
+            state.plankton.push({
+              x: Math.random() * viewW,
+              y: Math.random() * viewH,
+              r: 1.2 + Math.random() * 2.2,
+              vx: -6 + Math.random() * 12,
+              vy: -10 - Math.random() * 14,
+              phase: Math.random() * Math.PI * 2
+            });
+          }
+        }
+      }
+
+      function drawCustomSnake(targetCtx, s, isAlly, nowSec) {
+        if (!s.alive || s.segments.length === 0) return;
+
+        if (state.theme === 'nokia') {
+          drawNokiaPixelSnake(targetCtx, s, isAlly, nowSec);
+          return;
+        }
+
+        if (state.theme === 'notebook') {
+          drawNotebookInkSnake(targetCtx, s, isAlly, nowSec);
+          return;
+        }
+
+        const isFrozen = s.frozenTimer > 0;
+        const isGhost = s.ghostTimer > 0;
+        const isAbyss = state.theme === 'abyss';
+        const bodyColor = isFrozen ? '#7dd3fc' : s.color;
+
+        targetCtx.save();
+        if (isGhost) targetCtx.globalAlpha = 0.45;
+        else if (isAlly) targetCtx.globalAlpha = 0.78;
+
+        for (let i = s.segments.length - 1; i >= 1; i--) {
+          const seg = s.segments[i];
+          const ratio = 1 - i / s.segments.length;
+          const segR = 7.2 + ratio * 6.8;
+
+          let segFill = bodyColor;
+          if (!isFrozen) {
+            if (s.skin === 'coral' && i % 3 === 0) segFill = '#09090b';
+            else if (s.skin === 'coral' && i % 3 === 1) segFill = '#f8fafc';
+            else if (s.skin === 'axolotl' && i % 4 === 0) segFill = '#f472b6';
+          }
+
+          targetCtx.fillStyle = segFill;
+          targetCtx.beginPath();
+          targetCtx.arc(seg.x, seg.y, segR, 0, Math.PI * 2);
+          targetCtx.fill();
+
+          if (isAbyss && i % 2 === 0) {
+            targetCtx.fillStyle = 'rgba(204, 251, 241, 0.55)';
+            targetCtx.beginPath();
+            targetCtx.arc(seg.x, seg.y, segR * 0.36, 0, Math.PI * 2);
+            targetCtx.fill();
+          } else if (s.skin === 'viper' && i % 2 === 0) {
+            targetCtx.fillStyle = 'rgba(255,255,255,0.45)';
+            targetCtx.beginPath();
+            targetCtx.arc(seg.x, seg.y, segR * 0.35, 0, Math.PI * 2);
+            targetCtx.fill();
+          } else if ((s.skin === 'dragon' || s.skin === 'glacial') && i % 3 === 0) {
+            targetCtx.fillStyle = s.skin === 'glacial' ? '#e0f2fe' : '#facc15';
+            targetCtx.beginPath();
+            targetCtx.arc(seg.x, seg.y, segR * 0.45, 0, Math.PI * 2);
+            targetCtx.fill();
+          }
+        }
+
+        targetCtx.save();
+        targetCtx.translate(s.x, s.y);
+        targetCtx.rotate(s.angle);
+
+        if (s.shieldTimer > 0) {
+          targetCtx.strokeStyle = '#38bdf8';
+          targetCtx.lineWidth = 2.6;
+          targetCtx.beginPath();
+          targetCtx.arc(0, 0, 21, 0, Math.PI * 2);
+          targetCtx.stroke();
+        } else if (s.overdriveTimer > 0) {
+          targetCtx.strokeStyle = '#fb923c';
+          targetCtx.lineWidth = 2.4;
+          targetCtx.beginPath();
+          targetCtx.arc(0, 0, 19 + Math.sin(nowSec * 14) * 2, 0, Math.PI * 2);
+          targetCtx.stroke();
+        }
+
+        if (s.skin === 'dragon') {
+          targetCtx.fillStyle = '#facc15';
+          targetCtx.beginPath();
+          targetCtx.moveTo(-4, -9);
+          targetCtx.lineTo(-17, -16);
+          targetCtx.lineTo(-9, -5);
+          targetCtx.moveTo(-4, 9);
+          targetCtx.lineTo(-17, 16);
+          targetCtx.lineTo(-9, 5);
+          targetCtx.fill();
+        } else if (s.skin === 'axolotl') {
+          targetCtx.strokeStyle = '#f472b6';
+          targetCtx.lineWidth = 3;
+          targetCtx.lineCap = 'round';
+          [-1, 1].forEach(side => {
+            for (let g = 0; g < 3; g++) {
+              targetCtx.beginPath();
+              targetCtx.moveTo(-3 - g * 2, side * 10);
+              targetCtx.lineTo(-8 - g * 2, side * 18);
+              targetCtx.stroke();
+            }
+          });
+        } else if (s.skin === 'glacial') {
+          targetCtx.fillStyle = '#e0f2fe';
+          targetCtx.beginPath();
+          targetCtx.moveTo(0, -11);
+          targetCtx.lineTo(-12, -18);
+          targetCtx.lineTo(-7, -7);
+          targetCtx.moveTo(0, 11);
+          targetCtx.lineTo(-12, 18);
+          targetCtx.lineTo(-7, 7);
+          targetCtx.fill();
+        }
+
+        targetCtx.fillStyle = bodyColor;
+        targetCtx.beginPath();
+        targetCtx.arc(0, 0, 14.5, 0, Math.PI * 2);
+        targetCtx.fill();
+
+        if (s.skin === 'viper') {
+          targetCtx.fillStyle = '#09090b';
+          targetCtx.fillRect(2, -9, 7, 18);
+          targetCtx.fillStyle = '#facc15';
+          targetCtx.fillRect(4, -7.5, 4, 5.5);
+          targetCtx.fillRect(4, 2, 4, 5.5);
+        } else {
+          targetCtx.fillStyle = '#ffffff';
+          targetCtx.beginPath();
+          targetCtx.arc(5, -5.5, 3.8, 0, Math.PI * 2);
+          targetCtx.arc(5, 5.5, 3.8, 0, Math.PI * 2);
+          targetCtx.fill();
+
+          targetCtx.fillStyle = isFrozen ? '#0284c7' : '#09090b';
+          targetCtx.beginPath();
+          targetCtx.arc(6.5, -5.5, 1.9, 0, Math.PI * 2);
+          targetCtx.arc(6.5, 5.5, 1.9, 0, Math.PI * 2);
+          targetCtx.fill();
+        }
+
+        if (isFrozen) {
+          targetCtx.strokeStyle = '#ffffff';
+          targetCtx.lineWidth = 2;
+          targetCtx.strokeRect(-11, -11, 22, 22);
+        }
+
+        targetCtx.restore();
+        targetCtx.restore();
+      }
+
+      function drawNotebookInkSnake(targetCtx, s, isAlly, nowSec) {
+        const isLocalOrAlly = s.id === state.localSlot || isAlly;
+        const inkColor = s.frozenTimer > 0 ? '#0284c7' : (isLocalOrAlly ? '#1d4ed8' : '#dc2626');
+        const fillTint = s.frozenTimer > 0 ? '#bae6fd' : (isLocalOrAlly ? '#dbeafe' : '#fee2e2');
+
+        targetCtx.save();
+        if (s.ghostTimer > 0) targetCtx.globalAlpha = 0.45;
+
+        for (let i = s.segments.length - 1; i >= 1; i--) {
+          const seg = s.segments[i];
+          const ratio = 1 - i / s.segments.length;
+          const segR = 7.2 + ratio * 6.5;
+          const wobble = Math.sin(nowSec * 9 + i) * 0.6;
+
+          targetCtx.fillStyle = (s.skin === 'coral' && i % 2 === 0) ? inkColor : fillTint;
+          targetCtx.strokeStyle = inkColor;
+          targetCtx.lineWidth = 2;
+          targetCtx.beginPath();
+          targetCtx.arc(seg.x, seg.y, segR + wobble, 0, Math.PI * 2);
+          targetCtx.fill();
+          targetCtx.stroke();
+        }
+
+        targetCtx.save();
+        targetCtx.translate(s.x, s.y);
+        targetCtx.rotate(s.angle);
+
+        targetCtx.fillStyle = fillTint;
+        targetCtx.strokeStyle = inkColor;
+        targetCtx.lineWidth = 2.4;
+        targetCtx.beginPath();
+        targetCtx.arc(0, 0, 14.5, 0, Math.PI * 2);
+        targetCtx.fill();
+        targetCtx.stroke();
+
+        targetCtx.fillStyle = '#ffffff';
+        targetCtx.beginPath();
+        targetCtx.arc(5, -5.5, 4, 0, Math.PI * 2);
+        targetCtx.arc(5, 5.5, 4, 0, Math.PI * 2);
+        targetCtx.fill();
+        targetCtx.stroke();
+
+        targetCtx.fillStyle = inkColor;
+        targetCtx.beginPath();
+        targetCtx.arc(6.5, -5.5, 1.8, 0, Math.PI * 2);
+        targetCtx.arc(6.5, 5.5, 1.8, 0, Math.PI * 2);
+        targetCtx.fill();
+
+        targetCtx.restore();
+        targetCtx.restore();
+      }
+
+      function drawNokiaPixelSnake(targetCtx, s, isAlly, nowSec) {
+        const px = 4;
+        const snap = (v) => Math.round(v / px) * px;
+        const isLocalOrAlly = s.id === state.localSlot || isAlly;
+        const darkPx = '#0f380f';
+        const midPx = '#306230';
+        const lightPx = '#9bbc0f';
+        const isFrozen = s.frozenTimer > 0;
+        const isGhost = s.ghostTimer > 0;
+
+        targetCtx.save();
+        if (isGhost) targetCtx.globalAlpha = 0.5;
+
+        for (let i = s.segments.length - 1; i >= 1; i--) {
+          const seg = s.segments[i];
+          const sx = snap(seg.x);
+          const sy = snap(seg.y);
+          const ratio = 1 - i / s.segments.length;
+          const size = ratio > 0.65 ? px * 5 : (ratio > 0.3 ? px * 4 : px * 3);
+          const half = Math.floor(size / (2 * px)) * px;
+
+          if (isFrozen) {
+            targetCtx.fillStyle = i % 2 === 0 ? midPx : darkPx;
+            targetCtx.fillRect(sx - half, sy - half, size, size);
+            targetCtx.fillStyle = lightPx;
+            targetCtx.fillRect(sx - px, sy - px, px, px);
+          } else if (s.skin === 'coral') {
+            targetCtx.fillStyle = i % 3 === 0 ? darkPx : (i % 3 === 1 ? midPx : lightPx);
+            targetCtx.fillRect(sx - half, sy - half, size, size);
+            targetCtx.strokeStyle = darkPx;
+            targetCtx.lineWidth = 2;
+            targetCtx.strokeRect(sx - half, sy - half, size, size);
+          } else {
+            targetCtx.fillStyle = isLocalOrAlly ? darkPx : midPx;
+            targetCtx.fillRect(sx - half, sy - half, size, size);
+          }
+        }
+
+        const hx = snap(s.x);
+        const hy = snap(s.y);
+        const dirAngle = Math.round(s.angle / (Math.PI / 4)) * (Math.PI / 4);
+
+        targetCtx.save();
+        targetCtx.translate(hx, hy);
+        targetCtx.rotate(dirAngle);
+
+        if (s.shieldTimer > 0 || s.overdriveTimer > 0) {
+          targetCtx.strokeStyle = darkPx;
+          targetCtx.setLineDash([4, 4]);
+          targetCtx.lineWidth = 2;
+          targetCtx.strokeRect(-px * 4, -px * 4, px * 8, px * 8);
+          targetCtx.setLineDash([]);
+        }
+
+        targetCtx.fillStyle = isLocalOrAlly ? darkPx : midPx;
+        targetCtx.fillRect(-px * 3, -px * 3, px * 6, px * 6);
+
+        targetCtx.fillStyle = lightPx;
+        targetCtx.fillRect(px * 0.5, -px * 2, px, px);
+        targetCtx.fillRect(px * 0.5, px, px, px);
+
+        if (Math.sin(nowSec * 10) > 0.35) {
+          targetCtx.fillStyle = darkPx;
+          targetCtx.fillRect(px * 3, -px * 0.5, px * 2, px);
+        }
+
+        targetCtx.restore();
+        targetCtx.restore();
+      }
+
+      function renderSkinMiniPreview(nowSec) {
+        previewCtx.setTransform(1, 0, 0, 1, 0, 0);
+        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        if (state.theme === 'nokia') {
+          previewCtx.fillStyle = '#9bbc0f';
+          previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+        } else if (state.theme === 'notebook') {
+          previewCtx.fillStyle = '#f8fafc';
+          previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+        }
+        const dummySegs = [];
+        for (let i = 0; i < 9; i++) {
+          dummySegs.push({
+            x: 82 - i * 7.2,
+            y: 24 + Math.sin(nowSec * 5 - i * 0.65) * 4.5
+          });
+        }
+        const dummySnake = {
+          id: state.localSlot,
+          alive: true,
+          x: dummySegs[0].x,
+          y: dummySegs[0].y,
+          angle: Math.cos(nowSec * 5) * 0.25,
+          color: state.selectedColor,
+          skin: state.selectedSkin,
+          segments: dummySegs,
+          frozenTimer: 0,
+          ghostTimer: 0,
+          shieldTimer: 0,
+          overdriveTimer: 0
+        };
+        drawCustomSnake(previewCtx, dummySnake, false, nowSec);
+      }
+
+      function renderArena(nowSec, dt) {
+        const pal = THEMES[state.theme];
+        const isNokia = state.theme === 'nokia';
+        const isNotebook = state.theme === 'notebook';
+        const isAbyss = state.theme === 'abyss';
+        const infinite = isInfiniteWorld();
+
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.fillStyle = pal.bg;
+        ctx.fillRect(0, 0, viewW, viewH);
+
+        // Plâncton bioluminescente flutuante no tema Abismo
+        if (isAbyss) {
+          for (let i = 0; i < state.plankton.length; i++) {
+            const pk = state.plankton[i];
+            pk.x += pk.vx * dt;
+            pk.y += pk.vy * dt;
+            if (pk.x < 0) pk.x = viewW;
+            if (pk.x > viewW) pk.x = 0;
+            if (pk.y < 0) pk.y = viewH;
+            ctx.fillStyle = `rgba(45, 212, 191, ${0.15 + Math.sin(nowSec * 2.5 + pk.phase) * 0.12})`;
+            ctx.beginPath();
+            ctx.arc(pk.x, pk.y, pk.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        const me = state.snakes[state.localSlot];
+        if (state.phase === 'lobby') {
+          state.camera.x = Math.cos(nowSec * 0.25) * 320;
+          state.camera.y = Math.sin(nowSec * 0.25) * 320;
+          renderSkinMiniPreview(nowSec);
+        } else if (me) {
+          state.camera.x += (me.x - state.camera.x) * Math.min(1, dt * 8);
+          state.camera.y += (me.y - state.camera.y) * Math.min(1, dt * 8);
+        }
+
+        const scale = Math.max(0.75, Math.min(1.15, Math.min(viewW, viewH) / 560));
+        const halfViewW = viewW / scale + 80;
+        const halfViewH = viewH / scale + 80;
+
+        ctx.save();
+        ctx.translate(viewW / 2, viewH / 2);
+        ctx.scale(scale, scale);
+        ctx.translate(-state.camera.x, -state.camera.y);
+
+        // 1) Grade Infinita
+        const gridStep = isNotebook ? 48 : 80;
+        const rawStartX = Math.floor((state.camera.x - halfViewW) / gridStep) * gridStep;
+        const rawEndX = state.camera.x + halfViewW;
+        const rawStartY = Math.floor((state.camera.y - halfViewH) / gridStep) * gridStep;
+        const rawEndY = state.camera.y + halfViewH;
+
+        const startX = infinite ? rawStartX : Math.max(0, rawStartX);
+        const endX = infinite ? rawEndX : Math.min(ARENA_SIZE, rawEndX);
+        const startY = infinite ? rawStartY : Math.max(0, rawStartY);
+        const endY = infinite ? rawEndY : Math.min(ARENA_SIZE, rawEndY);
+
+        ctx.strokeStyle = pal.grid;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let gx = startX; gx <= endX; gx += gridStep) {
+          ctx.moveTo(gx, startY);
+          ctx.lineTo(gx, endY);
+        }
+        for (let gy = startY; gy <= endY; gy += gridStep) {
+          ctx.moveTo(startX, gy);
+          ctx.lineTo(endX, gy);
+        }
+        ctx.stroke();
+
+        // Marcador do Ponto Zero (0,0) no Mundo Infinito
+        if (infinite && Math.abs(state.camera.x) < halfViewW && Math.abs(state.camera.y) < halfViewH) {
+          ctx.strokeStyle = pal.grid;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, 56, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // 2) Campos de Gelo
+        for (let i = 0; i < state.iceZones.length; i++) {
+          const ice = state.iceZones[i];
+          if (Math.abs(ice.x - state.camera.x) > halfViewW + ice.r || Math.abs(ice.y - state.camera.y) > halfViewH + ice.r) continue;
+          if (isNokia) {
+            ctx.strokeStyle = '#0f380f';
+            ctx.setLineDash([6, 6]);
+            ctx.lineWidth = 2;
+            ctx.strokeRect(ice.x - ice.r * 0.78, ice.y - ice.r * 0.78, ice.r * 1.56, ice.r * 1.56);
+            ctx.setLineDash([]);
+            continue;
+          }
+          ctx.fillStyle = isNotebook ? 'rgba(14, 165, 233, 0.16)' : 'rgba(56, 189, 248, 0.18)';
+          ctx.beginPath();
+          ctx.arc(ice.x, ice.y, ice.r, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = isNotebook ? '#0284c7' : 'rgba(186, 230, 253, 0.4)';
+          ctx.setLineDash([8, 6]);
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.arc(ice.x, ice.y, ice.r - 4, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // 3) Vórtices Gravitacionais
+        for (let i = 0; i < state.vortices.length; i++) {
+          const vx = state.vortices[i];
+          if (Math.abs(vx.x - state.camera.x) > halfViewW + vx.r || Math.abs(vx.y - state.camera.y) > halfViewH + vx.r) continue;
+          if (isNokia) {
+            ctx.strokeStyle = '#0f380f';
+            ctx.lineWidth = 2;
+            for (let ring = 1; ring <= 3; ring++) {
+              const half = ((vx.r * 0.72) / 3) * ring;
+              ctx.strokeRect(vx.x - half, vx.y - half, half * 2, half * 2);
+            }
+            continue;
+          }
+          ctx.save();
+          ctx.translate(vx.x, vx.y);
+          ctx.rotate(nowSec * 2.2);
+          ctx.strokeStyle = isNotebook ? 'rgba(29, 78, 216, 0.45)' : (isAbyss ? 'rgba(45, 212, 191, 0.45)' : 'rgba(192, 132, 252, 0.4)');
+          ctx.lineWidth = 2;
+          for (let ring = 1; ring <= 3; ring++) {
+            ctx.beginPath();
+            ctx.arc(0, 0, (vx.r / 3) * ring, 0, Math.PI * 1.45);
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+
+        // 4) Lasers
+        for (let i = 0; i < state.lasers.length; i++) {
+          const lz = state.lasers[i];
+          if (lz.active) {
+            ctx.strokeStyle = isNokia ? '#0f380f' : (isNotebook ? '#dc2626' : (isAbyss ? '#38bdf8' : '#ef4444'));
+            ctx.lineWidth = isNokia ? 6 : 6 + Math.sin(nowSec * 24) * 2;
+            ctx.beginPath();
+            ctx.moveTo(lz.x1, lz.y1);
+            ctx.lineTo(lz.x2, lz.y2);
+            ctx.stroke();
+          } else if (lz.warning) {
+            ctx.strokeStyle = isNokia ? '#306230' : (isNotebook ? '#f59e0b' : 'rgba(250, 204, 21, 0.65)');
+            ctx.setLineDash([8, 8]);
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(lz.x1, lz.y1);
+            ctx.lineTo(lz.x2, lz.y2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+
+          ctx.fillStyle = pal.pillarStroke;
+          if (isNokia) {
+            ctx.fillRect(lz.x1 - 8, lz.y1 - 8, 16, 16);
+            ctx.fillRect(lz.x2 - 8, lz.y2 - 8, 16, 16);
+          } else {
+            ctx.beginPath();
+            ctx.arc(lz.x1, lz.y1, 9, 0, Math.PI * 2);
+            ctx.arc(lz.x2, lz.y2, 9, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        // 5) Pilares Sólidos
+        for (let i = 0; i < state.pillars.length; i++) {
+          const pil = state.pillars[i];
+          if (Math.abs(pil.x - state.camera.x) > halfViewW + pil.r || Math.abs(pil.y - state.camera.y) > halfViewH + pil.r) continue;
+          if (isNokia) {
+            const half = Math.round((pil.r * 0.86) / 4) * 4;
+            ctx.fillStyle = '#306230';
+            ctx.fillRect(pil.x - half, pil.y - half, half * 2, half * 2);
+            ctx.strokeStyle = '#0f380f';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(pil.x - half, pil.y - half, half * 2, half * 2);
+            continue;
+          }
+          ctx.fillStyle = pal.pillarFill;
+          ctx.strokeStyle = pal.pillarStroke;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(pil.x, pil.y, pil.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        // 6) Parede Externa APENAS nos modos competitivos fechados
+        if (!infinite) {
+          ctx.strokeStyle = pal.border;
+          ctx.lineWidth = 10;
+          ctx.strokeRect(0, 0, ARENA_SIZE, ARENA_SIZE);
+          if (isNokia) {
+            ctx.lineWidth = 3;
+            ctx.strokeRect(14, 14, ARENA_SIZE - 28, ARENA_SIZE - 28);
+          }
+        }
+
+        // 7) Orbes
+        for (let i = 0; i < state.orbs.length; i++) {
+          const o = state.orbs[i];
+          if (Math.abs(o.x - state.camera.x) > halfViewW || Math.abs(o.y - state.camera.y) > halfViewH) continue;
+          if (isNokia) {
+            const ox = Math.round(o.x / 4) * 4;
+            const oy = Math.round(o.y / 4) * 4;
+            ctx.fillStyle = '#0f380f';
+            if (o.bonus) {
+              ctx.fillRect(ox - 8, oy - 4, 16, 8);
+              ctx.fillRect(ox - 4, oy - 8, 8, 16);
+            } else {
+              ctx.fillRect(ox - 2, oy - 6, 4, 4);
+              ctx.fillRect(ox - 2, oy + 2, 4, 4);
+              ctx.fillRect(ox - 6, oy - 2, 4, 4);
+              ctx.fillRect(ox + 2, oy - 2, 4, 4);
+            }
+            continue;
+          }
+          const r = o.r + Math.sin(nowSec * 5 + o.pulse) * 1.1;
+          ctx.fillStyle = isNotebook ? (o.bonus ? '#eab308' : '#2563eb') : o.color;
+          ctx.beginPath();
+          ctx.arc(o.x, o.y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 8) 6 Itens Especiais
+        for (let i = 0; i < state.powerups.length; i++) {
+          const pw = state.powerups[i];
+          if (Math.abs(pw.x - state.camera.x) > halfViewW || Math.abs(pw.y - state.camera.y) > halfViewH) continue;
+          ctx.save();
+          ctx.translate(pw.x, pw.y);
+          if (isNokia) {
+            ctx.fillStyle = '#9bbc0f';
+            ctx.fillRect(-16, -16, 32, 32);
+            ctx.strokeStyle = '#0f380f';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(-16, -16, 32, 32);
+            const nGlyph = { magnet: 'M', shield: 'S', freeze: '*', overdrive: '>>', crystal: '+60', ghost: 'G' }[pw.kind] || '?';
+            ctx.fillStyle = '#0f380f';
+            ctx.font = 'bold 12px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(nGlyph, 0, 1);
+            ctx.restore();
+            continue;
+          }
+          ctx.fillStyle = isNotebook ? 'rgba(255, 255, 255, 0.92)' : 'rgba(255, 255, 255, 0.16)';
+          ctx.strokeStyle = isNotebook ? '#1d4ed8' : pw.color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, pw.r + Math.sin(nowSec * 4.5 + pw.pulse) * 2.2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.font = '18px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(pw.icon, 0, 1);
+          ctx.restore();
+        }
+
+        // 9) Ondas de Choque
+        for (let i = 0; i < state.shockwaves.length; i++) {
+          const sw = state.shockwaves[i];
+          ctx.strokeStyle = isNokia
+            ? `rgba(15, 56, 15, ${Math.max(0, sw.life / 0.65)})`
+            : `rgba(14, 165, 233, ${Math.max(0, sw.life / 0.65)})`;
+          ctx.lineWidth = 4;
+          if (isNokia) {
+            ctx.strokeRect(sw.x - sw.r, sw.y - sw.r, sw.r * 2, sw.r * 2);
+          } else {
+            ctx.beginPath();
+            ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+
+        // 10) Serpentes
+        for (let i = 0; i < state.snakes.length; i++) {
+          const s = state.snakes[i];
+          if (!s.alive) continue;
+          const isAlly = me && s.id !== me.id && me.team && s.team === me.team;
+          drawCustomSnake(ctx, s, isAlly, nowSec);
+
+          ctx.font = isNokia ? 'bold 11px monospace' : '700 11px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = isNokia ? '#0f380f' : (isNotebook ? '#1e3a8a' : (s.frozenTimer > 0 ? '#7dd3fc' : '#ffffff'));
+          const tag = s.frozenTimer > 0 ? `❄️ ${s.name}` : (isAlly ? `🤝 ${s.name}` : s.name);
+          ctx.fillText(tag, s.x, s.y - 23);
+        }
+
+        // 11) Partículas
+        for (let i = 0; i < state.particles.length; i++) {
+          const p = state.particles[i];
+          ctx.globalAlpha = Math.max(0, p.life / 0.6);
+          ctx.fillStyle = isNokia ? '#0f380f' : p.color;
+          if (isNokia) {
+            ctx.fillRect(Math.round(p.x / 4) * 4 - 2, Math.round(p.y / 4) * 4 - 2, 4, 4);
+          } else {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 4.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.globalAlpha = 1;
+
+        ctx.restore();
+
+        // Joystick Analógico Invisível
+        if (state.phase === 'playing' && state.touchJoy.id !== null) {
+          const tj = state.touchJoy;
+          const dx = tj.currX - tj.originX;
+          const dy = tj.currY - tj.originY;
+          const dist = Math.min(44, Math.hypot(dx, dy));
+          const ang = Math.atan2(dy, dx);
+          const kx = tj.originX + Math.cos(ang) * dist;
+          const ky = tj.originY + Math.sin(ang) * dist;
+
+          ctx.save();
+          ctx.strokeStyle = (isNokia || isNotebook) ? 'rgba(15, 56, 15, 0.45)' : 'rgba(255, 255, 255, 0.25)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(tj.originX, tj.originY, 34, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.fillStyle = (isNokia || isNotebook) ? 'rgba(15, 56, 15, 0.6)' : 'rgba(255, 255, 255, 0.42)';
+          ctx.beginPath();
+          ctx.arc(kx, ky, 10, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        if (state.phase === 'playing') {
+          renderRadarOrMinimap(pal, nowSec);
+        }
+      }
+
+      function renderRadarOrMinimap(pal, nowSec) {
+        const mw = miniCanvas.width;
+        const mh = miniCanvas.height;
+        const isNokia = state.theme === 'nokia';
+        const isNotebook = state.theme === 'notebook';
+        const infinite = isInfiniteWorld();
+
+        miniCtx.setTransform(1, 0, 0, 1, 0, 0);
+        miniCtx.fillStyle = pal.bg;
+        miniCtx.fillRect(0, 0, mw, mh);
+
+        if (infinite) {
+          const cx = mw / 2;
+          const cy = mh / 2;
+          const rad = mw / 2 - 4;
+          const me = state.snakes[state.localSlot];
+
+          miniCtx.strokeStyle = isNokia ? 'rgba(15,56,15,0.35)' : (isNotebook ? 'rgba(29,78,216,0.3)' : 'rgba(255,255,255,0.2)');
+          miniCtx.lineWidth = 1.2;
+          miniCtx.beginPath();
+          miniCtx.arc(cx, cy, rad, 0, Math.PI * 2);
+          miniCtx.stroke();
+          miniCtx.beginPath();
+          miniCtx.arc(cx, cy, rad * 0.5, 0, Math.PI * 2);
+          miniCtx.stroke();
+
+          if (!me) return;
+
+          const sweepAng = (nowSec * 2.2) % (Math.PI * 2);
+          miniCtx.strokeStyle = isNokia ? 'rgba(15,56,15,0.45)' : 'rgba(34,211,238,0.35)';
+          miniCtx.beginPath();
+          miniCtx.moveTo(cx, cy);
+          miniCtx.lineTo(cx + Math.cos(sweepAng) * rad, cy + Math.sin(sweepAng) * rad);
+          miniCtx.stroke();
+
+          for (let i = 0; i < state.powerups.length; i++) {
+            const pw = state.powerups[i];
+            const dx = pw.x - me.x;
+            const dy = pw.y - me.y;
+            const d = Math.hypot(dx, dy);
+            if (d <= RADAR_RANGE) {
+              const rx = cx + (dx / RADAR_RANGE) * rad;
+              const ry = cy + (dy / RADAR_RANGE) * rad;
+              miniCtx.fillStyle = isNokia ? '#0f380f' : '#facc15';
+              miniCtx.fillRect(rx - 1.5, ry - 1.5, 3, 3);
+            }
+          }
+
+          for (let i = 0; i < state.snakes.length; i++) {
+            const s = state.snakes[i];
+            if (!s.alive || s.id === me.id) continue;
+            const dx = s.x - me.x;
+            const dy = s.y - me.y;
+            const d = Math.hypot(dx, dy);
+            const clampedDist = Math.min(RADAR_RANGE, d);
+            const ang = Math.atan2(dy, dx);
+            const rx = cx + Math.cos(ang) * (clampedDist / RADAR_RANGE) * rad;
+            const ry = cy + Math.sin(ang) * (clampedDist / RADAR_RANGE) * rad;
+
+            miniCtx.fillStyle = isNokia ? '#306230' : (isNotebook ? '#dc2626' : s.color);
+            miniCtx.beginPath();
+            miniCtx.arc(rx, ry, d <= RADAR_RANGE ? 3 : 2, 0, Math.PI * 2);
+            miniCtx.fill();
+          }
+
+          miniCtx.fillStyle = isNokia ? '#0f380f' : (isNotebook ? '#1d4ed8' : '#ffffff');
+          miniCtx.beginPath();
+          miniCtx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+          miniCtx.fill();
+          return;
+        }
+
+        miniCtx.fillStyle = isNokia ? '#306230' : (isNotebook ? 'rgba(29, 78, 216, 0.35)' : 'rgba(255,255,255,0.22)');
+        for (let i = 0; i < state.pillars.length; i++) {
+          const pil = state.pillars[i];
+          const px = Math.round((pil.x / ARENA_SIZE) * mw);
+          const py = Math.round((pil.y / ARENA_SIZE) * mh);
+          if (isNokia) {
+            miniCtx.fillRect(px - 2, py - 2, 4, 4);
+          } else {
+            miniCtx.beginPath();
+            miniCtx.arc(px, py, 2, 0, Math.PI * 2);
+            miniCtx.fill();
+          }
+        }
+
+        for (let i = 0; i < state.snakes.length; i++) {
+          const s = state.snakes[i];
+          if (!s.alive) continue;
+          const sx = Math.round((s.x / ARENA_SIZE) * mw);
+          const sy = Math.round((s.y / ARENA_SIZE) * mh);
+          if (isNokia) {
+            miniCtx.fillStyle = s.id === state.localSlot ? '#0f380f' : '#306230';
+            const dot = s.id === state.localSlot ? 6 : 4;
+            miniCtx.fillRect(sx - dot / 2, sy - dot / 2, dot, dot);
+          } else if (isNotebook) {
+            miniCtx.fillStyle = s.id === state.localSlot ? '#1d4ed8' : '#dc2626';
+            miniCtx.beginPath();
+            miniCtx.arc(sx, sy, s.id === state.localSlot ? 3.5 : 2.5, 0, Math.PI * 2);
+            miniCtx.fill();
+          } else {
+            miniCtx.fillStyle = s.id === state.localSlot ? '#ffffff' : s.color;
+            miniCtx.beginPath();
+            miniCtx.arc(sx, sy, s.id === state.localSlot ? 3.5 : 2.5, 0, Math.PI * 2);
+            miniCtx.fill();
+          }
+        }
+      }
+
+      /* -----------------------------------------------------------------------
+         9. CONTROLES MOBILE & DESKTOP + TELA CHEIA / PAISAGEM
+         ----------------------------------------------------------------------- */
+      async function toggleFullscreen() {
+        sfx.init();
+        try {
+          if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+            // Celular já deitado: trava a orientação para não girar no meio da partida
+            if (screen.orientation && screen.orientation.lock && window.innerWidth > window.innerHeight) {
+              screen.orientation.lock('landscape').catch(() => {});
+            }
+          } else if (document.fullscreenElement && document.exitFullscreen) {
+            try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (_) {}
+            await document.exitFullscreen();
+          }
+        } catch (_) {}
+        resizeArenaCanvas();
+      }
+
+      /* Pausa: só sem convidados conectados (senão dessincroniza a sala) */
+      function canPause() {
+        return state.phase === 'playing' && state.isHost && !hasRemotePeers();
+      }
+
+      function updateSoundLabels() {
+        const headerBtn = document.getElementById('btn-sound-toggle');
+        if (headerBtn) headerBtn.textContent = sfx.enabled ? '🔊' : '🔇';
+        const pauseBtn = document.getElementById('btn-pause-sound');
+        if (pauseBtn) pauseBtn.textContent = sfx.enabled ? '🔊 Som: Ligado' : '🔇 Som: Desligado';
+      }
+
+      function isPauseMenuOpen() {
+        return !document.getElementById('modal-pause').classList.contains('hidden');
+      }
+
+      // Abre/fecha o menu. Sozinho: congela o jogo. Com convidados: só abre o menu.
+      function setPaused(open) {
+        if (open && state.phase !== 'playing') return;
+        state.paused = open && canPause();
+        resetInputState();
+        document.getElementById('pause-title').textContent = state.paused ? 'Jogo Pausado' : 'Menu (partida continua)';
+        document.getElementById('modal-pause').classList.toggle('hidden', !open);
+        updateSoundLabels();
+      }
+
+      const turboBtn = document.getElementById('btn-turbo');
+      function syncTurboVisual() {
+        turboBtn.classList.toggle('turbo-btn-active', isBoostInputActive());
+      }
+
+      canvas.addEventListener('touchstart', (e) => {
+        if (state.phase !== 'playing' || state.paused) return;
+        e.preventDefault();
+        sfx.init();
+
+        const now = performance.now();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (state.touchJoy.id === null) {
+            state.touchJoy.id = t.identifier;
+            state.touchJoy.originX = t.clientX;
+            state.touchJoy.originY = t.clientY;
+            state.touchJoy.currX = t.clientX;
+            state.touchJoy.currY = t.clientY;
+            // Duplo toque = turbo enquanto o dedo ficar pressionado
+            state.input.boost.tap = now - state.touchJoy.lastTapTime < 260;
+            state.touchJoy.lastTapTime = now;
+          } else {
+            // Segundo dedo na tela = turbo
+            state.touchJoy.extraTouches.add(t.identifier);
+          }
+        }
+        state.input.boost.extraFinger = state.touchJoy.extraTouches.size > 0;
+        syncTurboVisual();
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', (e) => {
+        if (state.phase !== 'playing' || state.paused) return;
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === state.touchJoy.id) {
+            state.touchJoy.currX = t.clientX;
+            state.touchJoy.currY = t.clientY;
+            const dx = t.clientX - state.touchJoy.originX;
+            const dy = t.clientY - state.touchJoy.originY;
+            if (Math.hypot(dx, dy) > 8) {
+              state.input.targetAngle = Math.atan2(dy, dx);
+            }
+          }
+        }
+      }, { passive: false });
+
+      // touchcancel (notificação, gesto do sistema) também libera o joystick
+      const endCanvasTouches = (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const t = e.changedTouches[i];
+          if (t.identifier === state.touchJoy.id) {
+            state.touchJoy.id = null;
+            state.input.boost.tap = false;
+          } else {
+            state.touchJoy.extraTouches.delete(t.identifier);
+          }
+        }
+        state.input.boost.extraFinger = state.touchJoy.extraTouches.size > 0;
+        syncTurboVisual();
+      };
+      canvas.addEventListener('touchend', endCanvasTouches, { passive: false });
+      canvas.addEventListener('touchcancel', endCanvasTouches, { passive: false });
+
+      canvas.addEventListener('mousemove', (e) => {
+        if (state.phase !== 'playing' || state.paused) return;
+        const dx = e.clientX - viewW / 2;
+        const dy = e.clientY - viewH / 2;
+        if (Math.hypot(dx, dy) > 12) {
+          state.input.targetAngle = Math.atan2(dy, dx);
+        }
+      });
+
+      canvas.addEventListener('mousedown', () => {
+        if (state.phase === 'playing' && !state.paused) {
+          state.input.boost.mouse = true;
+          syncTurboVisual();
+        }
+      });
+      window.addEventListener('mouseup', () => {
+        state.input.boost.mouse = false;
+        state.input.boost.button = false;
+        syncTurboVisual();
+      });
+
+      const setTurboButton = (active) => {
+        state.input.boost.button = active;
+        syncTurboVisual();
+      };
+      turboBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        sfx.init();
+        setTurboButton(true);
+      }, { passive: false });
+      turboBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        setTurboButton(false);
+      }, { passive: false });
+      turboBtn.addEventListener('touchcancel', () => setTurboButton(false));
+      turboBtn.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        setTurboButton(true);
+      });
+      turboBtn.addEventListener('mouseleave', () => setTurboButton(false));
+
+      const GAME_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'];
+      window.addEventListener('keydown', (e) => {
+        if (e.target && e.target.tagName === 'INPUT') return;
+        if (e.code === 'Escape' || e.code === 'KeyP') {
+          if (state.phase === 'playing') {
+            e.preventDefault();
+            setPaused(!isPauseMenuOpen());
+          }
+          return;
+        }
+        if (state.phase !== 'playing' || isPauseMenuOpen()) return;
+        // Evita que Espaço "clique" no último botão focado
+        if (GAME_KEYS.includes(e.code)) e.preventDefault();
+        if (e.code === 'ArrowUp' || e.code === 'KeyW') state.input.keys.up = true;
+        if (e.code === 'ArrowDown' || e.code === 'KeyS') state.input.keys.down = true;
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') state.input.keys.left = true;
+        if (e.code === 'ArrowRight' || e.code === 'KeyD') state.input.keys.right = true;
+        if (e.code === 'Space' || e.code === 'ShiftLeft') {
+          state.input.boost.key = true;
+          syncTurboVisual();
+        }
+      });
+
+      window.addEventListener('keyup', (e) => {
+        if (e.code === 'ArrowUp' || e.code === 'KeyW') state.input.keys.up = false;
+        if (e.code === 'ArrowDown' || e.code === 'KeyS') state.input.keys.down = false;
+        if (e.code === 'ArrowLeft' || e.code === 'KeyA') state.input.keys.left = false;
+        if (e.code === 'ArrowRight' || e.code === 'KeyD') state.input.keys.right = false;
+        if (e.code === 'Space' || e.code === 'ShiftLeft') {
+          state.input.boost.key = false;
+          syncTurboVisual();
+        }
+      });
+
+      // Sai do app/aba: pausa (se possível) e salva o recorde do modo infinito
+      function persistEndlessProgress() {
+        if (state.phase === 'playing' && isInfiniteWorld()) {
+          const me = state.snakes[state.localSlot];
+          if (me && me.alive && state.isHost) saveEndlessBest(me.score);
+        }
+      }
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          persistEndlessProgress();
+          if (canPause() && !isPauseMenuOpen()) setPaused(true);
+          else resetInputState();
+        }
+      });
+      window.addEventListener('pagehide', persistEndlessProgress);
+
+      /* -----------------------------------------------------------------------
+         10. LOBBY EM 3 ABAS & PRESETS
+         ----------------------------------------------------------------------- */
+      function switchLobbyTab(tabKey) {
+        state.activeLobbyTab = tabKey;
+        document.querySelectorAll('[data-tab-btn]').forEach(btn => {
+          const active = btn.dataset.tabBtn === tabKey;
+          btn.style.background = active ? 'var(--accent)' : 'transparent';
+          btn.style.color = active ? 'var(--accent-text)' : 'var(--text-main)';
+        });
+
+        ['play', 'visual', 'room'].forEach(panelKey => {
+          const panel = document.getElementById(`tab-panel-${panelKey}`);
+          if (panel) {
+            if (panelKey === tabKey) panel.classList.remove('hidden');
+            else panel.classList.add('hidden');
+          }
+        });
+      }
+
+      function applyPreset(presetKey) {
+        if (presetKey === 'endless') {
+          state.mode = 'endless';
+          state.totalCompetitors = 6;
+          state.botDifficulty = 'medium';
+          state.hazardLevel = 'normal';
+        } else if (presetKey === 'nokia') {
+          applyTheme('nokia');
+          state.mode = 'endless';
+          state.totalCompetitors = 4;
+          state.botDifficulty = 'medium';
+          state.hazardLevel = 'none';
+        } else if (presetKey === 'chaos6') {
+          if (state.theme === 'nokia') applyTheme('cyber');
+          state.mode = 'solo';
+          state.totalCompetitors = 6;
+          state.botDifficulty = 'insane';
+          state.hazardLevel = 'chaos';
+        } else if (presetKey === 'duo2v2') {
+          state.mode = '2v2';
+          state.totalCompetitors = 4;
+          state.botDifficulty = 'hard';
+          state.hazardLevel = 'normal';
+        }
+        refreshLobbyUI();
+      }
+
+      function buildCustomizationSelectors() {
+        const skinGrid = document.getElementById('skin-selector-grid');
+        skinGrid.innerHTML = SKINS.map(sk => `
+          <button type="button" data-skin-btn="${sk.id}" class="soft-box opt-card">
+            <div style="font-size:15px; line-height:1; pointer-events:none;">${sk.icon}</div>
+            <div style="font-size:9px; font-weight:900; margin-top:4px; pointer-events:none;">${sk.name.split(' ')[0]}</div>
+          </button>
+        `).join('');
+
+        const colorRow = document.getElementById('color-swatch-row');
+        colorRow.innerHTML = SNAKE_COLORS.map(c => `
+          <button type="button" data-color-btn="${c.hex}" style="width:32px; height:32px; border-radius:999px; border:2.5px solid rgba(255,255,255,0.25); background:${c.hex}; transition:transform 0.1s ease;" title="${c.label}"></button>
+        `).join('');
+      }
+
+      function applyTheme(themeKey) {
+        state.theme = themeKey;
+        document.documentElement.setAttribute('data-theme', themeKey);
+        const metaColors = {
+          cyber: '#060918',
+          nokia: '#8bac0f',
+          notebook: '#f8fafc',
+          abyss: '#020c1b',
+          jungle: '#0c1f13',
+          magma: '#180807',
+          retro: '#1b2219'
+        };
+        const meta = document.getElementById('meta-theme-color');
+        if (meta) meta.setAttribute('content', metaColors[themeKey] || '#060918');
+
+        document.querySelectorAll('[data-theme-btn]').forEach(btn => {
+          const active = btn.dataset.themeBtn === themeKey;
+          btn.style.borderColor = active ? 'var(--accent)' : 'var(--panel-border)';
+          if (btn.closest('#hud-overlay')) {
+            btn.style.background = active ? 'var(--accent)' : 'transparent';
+            btn.style.color = active ? 'var(--accent-text)' : 'var(--text-main)';
+          }
+        });
+        refreshLobbyUI();
+      }
+
+      function refreshLobbyUI() {
+        const activeSkinObj = SKINS.find(s => s.id === state.selectedSkin) || SKINS[0];
+        const titleEl = document.getElementById('selected-skin-title');
+        if (titleEl) titleEl.textContent = `${activeSkinObj.icon} ${activeSkinObj.name}`;
+
+        const modeLabel = state.mode === 'endless'
+          ? `♾️ Mapa Infinito (Rec. ${state.endlessBest})`
+          : (state.mode === 'solo'
+            ? `Solo ${state.totalCompetitors}P`
+            : (state.mode === '2v2' ? 'Dupla 2v2' : 'Equipe 3v3'));
+        const diffLabel = DIFFICULTY_CFG[state.botDifficulty].label;
+        const hazLabel = state.hazardLevel === 'none'
+          ? 'Limpa'
+          : (state.hazardLevel === 'normal' ? 'Normal' : 'Caótica');
+        const summaryEl = document.getElementById('lobby-summary-pill');
+        if (summaryEl) summaryEl.textContent = `${modeLabel} · ${diffLabel} · ${hazLabel}`;
+
+        const activeFormatKey = state.mode === 'solo' ? `solo-${state.totalCompetitors}` : state.mode;
+        document.querySelectorAll('[data-format-btn]').forEach(btn => {
+          btn.style.borderColor = btn.dataset.formatBtn === activeFormatKey ? 'var(--accent)' : 'var(--panel-border)';
+        });
+
+        document.querySelectorAll('[data-skin-btn]').forEach(btn => {
+          btn.style.borderColor = btn.dataset.skinBtn === state.selectedSkin ? 'var(--accent)' : 'var(--panel-border)';
+        });
+
+        document.querySelectorAll('[data-color-btn]').forEach(btn => {
+          const active = btn.dataset.colorBtn === state.selectedColor;
+          btn.style.borderColor = active ? '#ffffff' : 'rgba(255,255,255,0.25)';
+          btn.style.transform = active ? 'scale(1.16)' : 'scale(1)';
+        });
+
+        document.querySelectorAll('[data-diff-btn]').forEach(btn => {
+          btn.style.borderColor = btn.dataset.diffBtn === state.botDifficulty ? 'var(--accent)' : 'var(--panel-border)';
+        });
+
+        document.querySelectorAll('[data-haz-btn]').forEach(btn => {
+          btn.style.borderColor = btn.dataset.hazBtn === state.hazardLevel ? 'var(--accent)' : 'var(--panel-border)';
+        });
+        savePrefs();
+      }
+
+      function showToast(text) {
+        const anchor = document.getElementById('toast-anchor');
+        if (!anchor) return;
+        anchor.innerHTML = '';
+        const div = document.createElement('div');
+        div.className = 'toast-banner glass-box';
+        div.textContent = text;
+        anchor.appendChild(div);
+      }
+
+      function returnToLobby() {
+        persistEndlessProgress();
+        state.phase = 'lobby';
+        state.paused = false;
+        resetInputState();
+        // Limpa a partida anterior para não deixar cobras congeladas no fundo do lobby
+        state.snakes = [];
+        state.orbs = [];
+        state.powerups = [];
+        state.pillars = [];
+        state.iceZones = [];
+        state.vortices = [];
+        state.lasers = [];
+        state.shockwaves = [];
+        state.particles = [];
+        state.generatedChunks.clear();
+        document.getElementById('hud-overlay').classList.add('hidden');
+        document.getElementById('modal-gameover').classList.add('hidden');
+        document.getElementById('modal-pause').classList.add('hidden');
+        document.getElementById('respawn-banner').classList.add('hidden');
+        document.getElementById('lobby-screen').classList.remove('hidden');
+        refreshLobbyUI();
+      }
+
+      /* -----------------------------------------------------------------------
+         PERFIL LOCAL: cadastro no 1º acesso, foto por câmera/galeria ou ícone
+         ----------------------------------------------------------------------- */
+      const AVATAR_SIZE = 128;
+      let profileDraft = { name: '', avatar: sanitizeAvatar(null) };
+      let cameraStream = null;
+
+      function renderAvatarSlots() {
+        const av = state.profile ? state.profile.avatar : null;
+        [['lobby-avatar-slot', 30], ['room-avatar-slot', 40], ['hud-avatar-slot', 34]].forEach(([id, size]) => {
+          const el = document.getElementById(id);
+          if (el) el.innerHTML = avatarMarkup(av, size);
+        });
+        const nameEl = document.getElementById('room-player-name');
+        if (nameEl) nameEl.textContent = state.playerName;
+      }
+
+      function buildAvatarPresetGrid() {
+        document.getElementById('profile-preset-grid').innerHTML = AVATAR_PRESETS.map(icon =>
+          `<button type="button" data-avatar-preset="${icon}" class="soft-box avatar-preset" aria-label="Ícone ${icon}">${icon}</button>`
+        ).join('');
+      }
+
+      function renderProfileDraft() {
+        document.getElementById('profile-avatar-preview').innerHTML = avatarMarkup(profileDraft.avatar, 96);
+        document.querySelectorAll('[data-avatar-preset]').forEach(btn => {
+          const active = profileDraft.avatar.type === 'emoji' && profileDraft.avatar.value === btn.dataset.avatarPreset;
+          btn.style.borderColor = active ? 'var(--accent)' : 'var(--panel-border)';
+        });
+      }
+
+      function openProfileModal() {
+        const firstTime = !state.profile;
+        profileDraft = {
+          name: state.profile ? state.profile.name : '',
+          avatar: sanitizeAvatar(state.profile && state.profile.avatar)
+        };
+        document.getElementById('profile-modal-kicker').textContent = firstTime ? 'Bem-vindo à Arena' : 'Seu Perfil';
+        document.getElementById('profile-modal-title').textContent = firstTime ? 'Crie seu Perfil' : 'Editar Perfil';
+        document.getElementById('btn-save-profile').textContent = firstTime ? 'Salvar e Começar' : 'Salvar Perfil';
+        // No 1º acesso o cadastro é obrigatório: sem botão de fechar
+        document.getElementById('btn-close-profile').classList.toggle('hidden', firstTime);
+        document.getElementById('input-profile-name').value = profileDraft.name;
+        document.getElementById('profile-name-error').classList.add('hidden');
+        stopCamera();
+        renderProfileDraft();
+        document.getElementById('modal-profile').classList.remove('hidden');
+      }
+
+      function closeProfileModal() {
+        if (!state.profile) return;
+        stopCamera();
+        document.getElementById('modal-profile').classList.add('hidden');
+      }
+
+      function commitProfile() {
+        const nameInput = document.getElementById('input-profile-name');
+        const name = nameInput.value.trim().slice(0, 12);
+        if (!name) {
+          document.getElementById('profile-name-error').classList.remove('hidden');
+          nameInput.focus();
+          return;
+        }
+        const profile = { name, avatar: sanitizeAvatar(profileDraft.avatar) };
+        if (!saveProfile(profile)) {
+          // Armazenamento cheio/bloqueado: tenta salvar sem a foto
+          profile.avatar = { type: 'emoji', value: AVATAR_PRESETS[0] };
+          if (!saveProfile(profile)) showToast('Não foi possível salvar o perfil neste aparelho.');
+          else showToast('Sem espaço para a foto. Usamos um ícone.');
+        }
+        state.profile = profile;
+        state.playerName = profile.name;
+        renderAvatarSlots();
+        stopCamera();
+        document.getElementById('modal-profile').classList.add('hidden');
+        showToast(`Perfil salvo. Boa partida, ${profile.name}!`);
+        if (!state.isHost) {
+          sendNet({ type: 'HELLO_PEER', name: state.playerName, skin: state.selectedSkin, color: state.selectedColor });
+        }
+      }
+
+      /* Recorta o centro em quadrado e reduz para 128x128 (cabe no localStorage) */
+      function imageSourceToAvatar(source, srcW, srcH, mirror) {
+        const side = Math.min(srcW, srcH);
+        const sx = (srcW - side) / 2;
+        const sy = (srcH - side) / 2;
+        const c = document.createElement('canvas');
+        c.width = AVATAR_SIZE;
+        c.height = AVATAR_SIZE;
+        const g = c.getContext('2d');
+        if (mirror) {
+          g.translate(AVATAR_SIZE, 0);
+          g.scale(-1, 1);
+        }
+        g.drawImage(source, sx, sy, side, side, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
+        return c.toDataURL('image/jpeg', 0.82);
+      }
+
+      function handlePhotoFile(file) {
+        if (!file) return;
+        if (!/^image\//.test(file.type)) {
+          showToast('Escolha um arquivo de imagem.');
+          return;
+        }
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          try {
+            profileDraft.avatar = { type: 'photo', value: imageSourceToAvatar(img, img.naturalWidth, img.naturalHeight, false) };
+            renderProfileDraft();
+          } catch (_) {
+            showToast('Não foi possível usar essa imagem.');
+          }
+          URL.revokeObjectURL(url);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          showToast('Formato de imagem não suportado.');
+        };
+        img.src = url;
+      }
+
+      function setCameraPanelVisible(visible) {
+        document.getElementById('profile-camera-panel').classList.toggle('hidden', !visible);
+        document.getElementById('profile-photo-actions').classList.toggle('hidden', visible);
+        document.getElementById('profile-avatar-preview').classList.toggle('hidden', visible);
+      }
+
+      async function startCamera() {
+        const captureInput = document.getElementById('input-photo-capture');
+        // Sem getUserMedia (ou fora de HTTPS): usa a câmera nativa do celular
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.isSecureContext) {
+          captureInput.click();
+          return;
+        }
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
+            audio: false
+          });
+          const video = document.getElementById('profile-camera-video');
+          video.srcObject = cameraStream;
+          setCameraPanelVisible(true);
+          await video.play().catch(() => {});
+        } catch (_) {
+          stopCamera();
+          showToast('Câmera bloqueada ou indisponível. Use a Galeria ou um ícone.');
+        }
+      }
+
+      function stopCamera() {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(t => t.stop());
+          cameraStream = null;
+        }
+        const video = document.getElementById('profile-camera-video');
+        if (video) video.srcObject = null;
+        setCameraPanelVisible(false);
+      }
+
+      function snapCameraPhoto() {
+        const video = document.getElementById('profile-camera-video');
+        if (!video.videoWidth) {
+          showToast('A câmera ainda está iniciando…');
+          return;
+        }
+        // Espelhado, igual à prévia de selfie
+        profileDraft.avatar = { type: 'photo', value: imageSourceToAvatar(video, video.videoWidth, video.videoHeight, true) };
+        stopCamera();
+        renderProfileDraft();
+      }
+
+      ['input-photo-gallery', 'input-photo-capture'].forEach((id) => {
+        document.getElementById(id).addEventListener('change', (e) => {
+          handlePhotoFile(e.target.files && e.target.files[0]);
+          e.target.value = ''; // permite escolher o mesmo arquivo de novo
+        });
+      });
+
+      document.getElementById('input-profile-name').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') commitProfile();
+      });
+      document.getElementById('input-profile-name').addEventListener('input', () => {
+        document.getElementById('profile-name-error').classList.add('hidden');
+      });
+
+      /* Convite: compartilhamento nativo no celular, cópia no desktop */
+      async function shareInvite() {
+        if (state.isHost) ensurePeerJSLoaded();
+        const url = getShareUrl();
+        const lbl = document.getElementById('copy-invite-lbl');
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: 'Serpente Arena', text: `Entre na minha sala ${state.roomCode}!`, url });
+            return;
+          } catch (err) {
+            if (err && err.name === 'AbortError') return;
+          }
+        }
+        let ok = false;
+        try {
+          await navigator.clipboard.writeText(url);
+          ok = true;
+        } catch (_) {
+          try {
+            const tmp = document.createElement('input');
+            tmp.value = url;
+            document.body.appendChild(tmp);
+            tmp.select();
+            ok = document.execCommand('copy');
+            document.body.removeChild(tmp);
+          } catch (_) {}
+        }
+        lbl.textContent = ok ? 'Copiado!' : 'Falhou';
+        setTimeout(() => { lbl.textContent = '🔗 Link'; }, 1800);
+      }
+
+      document.body.addEventListener('click', (e) => {
+        const target = e.target.closest('button');
+        if (!target) return;
+
+        if (target.dataset.avatarPreset) {
+          profileDraft.avatar = sanitizeAvatar({ type: 'emoji', value: target.dataset.avatarPreset });
+          renderProfileDraft();
+          return;
+        }
+        if (target.dataset.tabBtn) {
+          sfx.init();
+          switchLobbyTab(target.dataset.tabBtn);
+          // Aba Sala: prepara a conexão P2P para que amigos consigam entrar
+          if (target.dataset.tabBtn === 'room' && state.isHost) ensurePeerJSLoaded();
+          return;
+        }
+        if (target.dataset.preset) {
+          sfx.init();
+          applyPreset(target.dataset.preset);
+          return;
+        }
+        if (target.dataset.formatBtn) {
+          sfx.init();
+          const val = target.dataset.formatBtn;
+          if (val === 'endless') {
+            state.mode = 'endless';
+            state.totalCompetitors = 6;
+          } else if (val.startsWith('solo-')) {
+            state.mode = 'solo';
+            state.totalCompetitors = Number(val.split('-')[1]);
+          } else {
+            state.mode = val;
+            state.totalCompetitors = val === '2v2' ? 4 : 6;
+          }
+          refreshLobbyUI();
+          return;
+        }
+        if (target.dataset.themeBtn) {
+          sfx.init();
+          applyTheme(target.dataset.themeBtn);
+          return;
+        }
+        if (target.dataset.skinBtn) {
+          sfx.init();
+          state.selectedSkin = target.dataset.skinBtn;
+          refreshLobbyUI();
+          return;
+        }
+        if (target.dataset.colorBtn) {
+          sfx.init();
+          state.selectedColor = target.dataset.colorBtn;
+          refreshLobbyUI();
+          return;
+        }
+        if (target.dataset.diffBtn) {
+          sfx.init();
+          state.botDifficulty = target.dataset.diffBtn;
+          refreshLobbyUI();
+          return;
+        }
+        if (target.dataset.hazBtn) {
+          sfx.init();
+          state.hazardLevel = target.dataset.hazBtn;
+          refreshLobbyUI();
+          return;
+        }
+
+        switch (target.id) {
+          case 'btn-fullscreen-toggle':
+          case 'btn-hud-fullscreen':
+            toggleFullscreen();
+            break;
+          case 'btn-quick-visual':
+            switchLobbyTab(state.activeLobbyTab === 'visual' ? 'play' : 'visual');
+            break;
+          case 'btn-sound-toggle':
+          case 'btn-pause-sound':
+            sfx.enabled = !sfx.enabled;
+            updateSoundLabels();
+            savePrefs();
+            break;
+          case 'btn-open-tutorial':
+            document.getElementById('modal-tutorial').classList.remove('hidden');
+            break;
+          case 'btn-close-tutorial':
+          case 'btn-ok-tutorial':
+            document.getElementById('modal-tutorial').classList.add('hidden');
+            break;
+          case 'btn-open-profile':
+          case 'btn-edit-profile':
+            openProfileModal();
+            break;
+          case 'btn-close-profile':
+            closeProfileModal();
+            break;
+          case 'btn-save-profile':
+            commitProfile();
+            break;
+          case 'btn-profile-camera':
+            startCamera();
+            break;
+          case 'btn-profile-gallery':
+            document.getElementById('input-photo-gallery').click();
+            break;
+          case 'btn-camera-snap':
+            snapCameraPhoto();
+            break;
+          case 'btn-camera-cancel':
+            stopCamera();
+            break;
+          case 'btn-qr-toggle': {
+            const panel = document.getElementById('qr-panel');
+            panel.classList.toggle('hidden');
+            if (!panel.classList.contains('hidden')) {
+              if (state.isHost) ensurePeerJSLoaded();
+              renderRoomQR();
+            }
+            break;
+          }
+          case 'btn-join-room': {
+            const inp = document.getElementById('input-join-code');
+            const val = inp.value.trim().toUpperCase();
+            if (val.length >= 3) {
+              initRoomNetwork(val, true);
+              inp.value = '';
+            } else {
+              showToast('Digite o código da sala (4 letras).');
+            }
+            break;
+          }
+          case 'btn-copy-invite':
+            shareInvite();
+            break;
+          case 'btn-start-arena':
+          case 'btn-play-again':
+            if (!state.isHost) {
+              if (state.hostConnected) {
+                showToast('Aguarde: só o anfitrião inicia a partida.');
+                break;
+              }
+              // Convidado sem anfitrião: vira anfitrião da própria sala
+              initRoomNetwork(makeRoomCode(), false);
+            }
+            startArenaMatch();
+            break;
+          case 'btn-hud-pause':
+            setPaused(true);
+            break;
+          case 'btn-resume':
+            setPaused(false);
+            break;
+          case 'btn-pause-exit':
+          case 'btn-back-lobby':
+            returnToLobby();
+            break;
+        }
+      });
+
+      window.addEventListener('resize', resizeArenaCanvas);
+      window.addEventListener('orientationchange', () => setTimeout(resizeArenaCanvas, 120));
+
+      /* -----------------------------------------------------------------------
+         11. INICIALIZAÇÃO IMEDIATA & LOOP PRINCIPAL 60 FPS
+         ----------------------------------------------------------------------- */
+      resizeArenaCanvas();
+      buildCustomizationSelectors();
+      buildAvatarPresetGrid();
+
+      // Restaura preferências salvas (com validação)
+      const prefs = loadPrefs();
+      if (THEMES[prefs.theme]) state.theme = prefs.theme;
+      if (SKINS.some(sk => sk.id === prefs.selectedSkin)) state.selectedSkin = prefs.selectedSkin;
+      if (SNAKE_COLORS.some(c => c.hex === prefs.selectedColor)) state.selectedColor = prefs.selectedColor;
+      if (DIFFICULTY_CFG[prefs.botDifficulty]) state.botDifficulty = prefs.botDifficulty;
+      if (['none', 'normal', 'chaos'].includes(prefs.hazardLevel)) state.hazardLevel = prefs.hazardLevel;
+      if (VALID_MODES.includes(prefs.mode)) {
+        state.mode = prefs.mode;
+        state.totalCompetitors = [2, 4, 6].includes(prefs.totalCompetitors) ? prefs.totalCompetitors : 6;
+      }
+      if (typeof prefs.sound === 'boolean') sfx.enabled = prefs.sound;
+      updateSoundLabels();
+
+      state.profile = loadProfile();
+      if (state.profile) state.playerName = state.profile.name;
+
+      switchLobbyTab('play');
+      applyTheme(state.theme);
+      renderAvatarSlots();
+      document.getElementById('btn-fullscreen-toggle').classList.toggle('hidden', !document.fullscreenEnabled);
+
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const roomParam = params.get('sala');
+        if (roomParam && roomParam.trim().length >= 3) {
+          initRoomNetwork(roomParam.trim(), true);
+        } else {
+          initRoomNetwork(makeRoomCode(), false);
+        }
+      } catch (_) {
+        initRoomNetwork(makeRoomCode(), false);
+      }
+
+      // 1º acesso: cadastro de perfil antes de jogar
+      if (!state.profile) openProfileModal();
+
+      let lastTime = performance.now();
+      function frameLoop(now) {
+        const dt = Math.min(0.05, (now - lastTime) / 1000);
+        lastTime = now;
+        const nowSec = now / 1000;
+
+        updateArenaSimulation(dt, nowSec);
+        renderArena(nowSec, dt);
+
+        requestAnimationFrame(frameLoop);
+      }
+
+      requestAnimationFrame(frameLoop);
+    });
+  </script>
+</body>
+</html>
