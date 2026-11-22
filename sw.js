@@ -1,6 +1,6 @@
 /* Service Worker da Serpente Arena: permite instalar e jogar offline.
    Ao publicar uma nova versão, aumente CACHE_VERSION para renovar o cache. */
-const CACHE_VERSION = 'serpente-arena-v2';
+const CACHE_VERSION = 'serpente-arena-v3';
 const APP_SHELL = [
   './',
   './index.html',
