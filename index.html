@@ -880,6 +880,10 @@
           <span>🧭 Mundo Aberto</span>
           <span id="hud-coords-val">X: 0 · Y: 0</span>
         </div>
+        <div id="hud-net-row" class="font-mono hidden" style="margin-top:4px; padding-top:4px; border-top:1px solid var(--panel-border); font-size:10px; color:var(--text-muted); display:flex; justify-content:space-between;">
+          <span>📶 Rede</span>
+          <span id="hud-net-val">--</span>
+        </div>
       </div>
 
       <!-- Radar / Minimapa + Pausa, Som & Tela Cheia -->
@@ -1456,6 +1460,42 @@
       let peerScriptRequested = false;
       const tabId = 'snk_' + Math.random().toString(36).slice(2, 8);
 
+      /* Rede em tempo real:
+         - canal confiável (PeerJS): controle + eventos do mundo (orbes, itens, obstáculos)
+         - canal rápido (não confiável, sem ordem): snapshots e comandos; pacote velho é descartado
+         - convidado prevê a própria cobra; as outras são interpoladas um pouco no passado
+         - anfitrião compensa o atraso do convidado ao julgar colisões */
+      const NET_PROTO = 2;
+      const NET = {
+        SNAP_INTERVAL: 1 / 30,   // snapshots por segundo (anfitrião → convidados)
+        DELTA_INTERVAL: 0.05,    // eventos do mundo (orbes/itens/obstáculos)
+        INTERP_MS: 70,           // atraso de interpolação das cobras remotas
+        MAX_EXTRAP_MS: 150,      // extrapolação máxima se faltar snapshot
+        INPUT_MIN_MS: 15,        // envio de comandos do convidado (~60/s)
+        FAST_CHANNEL_ID: 42,
+        MAX_BUFFERED: 64 * 1024, // acima disso o snapshot é descartado (o próximo substitui)
+        REWIND_CAP_MS: 250,      // compensação de atraso máxima nas colisões
+        SNAP_DIST: 500           // divergência que força o convidado a aceitar a posição do anfitrião
+      };
+      const net = {
+        matchId: 0,
+        orbSeq: 0,
+        pwSeq: 0,
+        sentOrbs: new Set(),
+        sentPwSig: '',
+        sentHzSig: '',
+        deltaTick: 0,
+        history: [],
+        snapBuf: {},
+        clockOffset: null,
+        lastSnapT: 0,
+        lastFullT: 0,
+        lastInputAt: 0,
+        rtt: 0,
+        relay: false,
+        statsTick: 0
+      };
+
       function isInfiniteWorld() {
         return state.mode === 'endless';
       }
@@ -1524,7 +1564,7 @@
           const pId = joining ? undefined : `serpente-arena-${code}`;
           peer = new window.Peer(pId, { debug: 0 });
           peer.on('open', () => {
-            if (joining) attachConn(peer.connect(`serpente-arena-${code}`, { reliable: true }));
+            if (joining) attachConn(peer.connect(`serpente-arena-${code}`, { reliable: true, serialization: 'json' }));
           });
           peer.on('connection', (conn) => {
             if (!joining) attachConn(conn);
@@ -1599,7 +1639,7 @@
 
         if (joining) {
           ensurePeerJSLoaded();
-          sendNet({ type: 'HELLO_PEER', name: state.playerName, skin: state.selectedSkin, color: state.selectedColor });
+          sendNet({ type: 'HELLO_PEER', proto: NET_PROTO, name: state.playerName, skin: state.selectedSkin, color: state.selectedColor });
           showToast(`Procurando a sala ${state.roomCode}…`);
           const joinCode = state.roomCode;
           joinTimeoutId = setTimeout(() => {
@@ -1620,15 +1660,41 @@
         if (!conn) return;
         peerConns.push(conn);
         conn.on('open', () => {
+          setupFastChannel(conn);
           if (!state.isHost) {
-            sendNet({ type: 'HELLO_PEER', name: state.playerName, skin: state.selectedSkin, color: state.selectedColor });
+            sendNet({ type: 'HELLO_PEER', proto: NET_PROTO, name: state.playerName, skin: state.selectedSkin, color: state.selectedColor });
           }
         });
         conn.on('data', (d) => handleNetMessage(d));
         conn.on('close', () => {
           peerConns = peerConns.filter(c => c !== conn);
+          if (conn._fast) { try { conn._fast.close(); } catch (_) {} conn._fast = null; }
         });
         conn.on('error', () => {});
+      }
+
+      /* Canal extra na mesma conexão WebRTC: sem ordem e sem retransmissão.
+         Os dois lados criam com o mesmo id (negotiated), sem renegociar a conexão. */
+      function setupFastChannel(conn) {
+        const pc = conn.peerConnection;
+        if (!pc || conn._fast) return;
+        try {
+          const dc = pc.createDataChannel('snk-fast', {
+            negotiated: true,
+            id: NET.FAST_CHANNEL_ID,
+            ordered: false,
+            maxRetransmits: 0
+          });
+          dc.onmessage = (e) => {
+            let m = null;
+            try { m = JSON.parse(e.data); } catch (_) { return; }
+            handleNetMessage(m);
+          };
+          dc.onclose = () => { if (conn._fast === dc) conn._fast = null; };
+          conn._fast = dc;
+        } catch (_) {
+          conn._fast = null;
+        }
       }
 
       function sendNet(payload) {
@@ -1637,25 +1703,523 @@
         peerConns.forEach(c => { if (c.open) { try { c.send(msg); } catch (_) {} } });
       }
 
+      /* Mensagens de tempo real: canal rápido quando disponível; se a fila encher, descarta */
+      function sendFast(payload) {
+        const msg = { ...payload, sender: tabId, room: state.roomCode };
+        if (bc) { try { bc.postMessage(msg); } catch (_) {} }
+        let str = null;
+        peerConns.forEach(c => {
+          if (!c.open) return;
+          const dc = c._fast;
+          if (dc && dc.readyState === 'open') {
+            if (dc.bufferedAmount > NET.MAX_BUFFERED) return;
+            if (str === null) str = JSON.stringify(msg);
+            try { dc.send(str); } catch (_) {}
+          } else {
+            const rdc = c.dataChannel;
+            if (rdc && rdc.bufferedAmount > NET.MAX_BUFFERED) return;
+            try { c.send(msg); } catch (_) {}
+          }
+        });
+      }
+
       function hasRemotePeers() {
         return Object.keys(state.remotePeers).length > 0;
       }
 
-      function broadcastSnapshot() {
-        sendNet({
-          type: 'WORLD_SNAPSHOT',
-          phase: state.phase,
+      /* ---------- Empacotamento compacto do estado ---------- */
+      const r1 = (v) => Math.round((Number(v) || 0) * 10) / 10;
+      const r2 = (v) => Math.round((Number(v) || 0) * 100) / 100;
+      const r3 = (v) => Math.round((Number(v) || 0) * 1000) / 1000;
+
+      // [id, flags, x, y, angle, length, score, shield, magnet, overdrive, ghost, frozen, respawn, epoch]
+      // flags: 1 = viva, 2 = turbo, 4 = bot
+      function packSnakeDyn(s) {
+        const flags = (s.alive ? 1 : 0) | (s.boosting ? 2 : 0) | (s.isBot ? 4 : 0);
+        return [
+          s.id, flags, r1(s.x), r1(s.y), r3(s.angle), r1(s.length), Math.round(s.score),
+          r2(s.shieldTimer), r2(s.magnetTimer), r2(s.overdriveTimer), r2(s.ghostTimer), r2(s.frozenTimer),
+          r2(s.respawnTimer), s.epoch || 0
+        ];
+      }
+
+      function packOrb(o) {
+        return [o.id, r1(o.x), r1(o.y), o.value, o.bonus ? 1 : 0, o.color];
+      }
+
+      function packPowerups() {
+        return state.powerups.map(p => [p.id, r1(p.x), r1(p.y), p.kind]);
+      }
+
+      function packHazards() {
+        return {
+          p: state.pillars.map(p => [r1(p.x), r1(p.y), r1(p.r)]),
+          i: state.iceZones.map(z => [r1(z.x), r1(z.y), r1(z.r)]),
+          v: state.vortices.map(v => [r1(v.x), r1(v.y), r1(v.r), r1(v.strength)]),
+          l: state.lasers.map(l => [r1(l.x1), r1(l.y1), r1(l.x2), r1(l.y2), r3(l.phase)])
+        };
+      }
+
+      function hazardSignature() {
+        return `${state.pillars.length}:${state.iceZones.length}:${state.vortices.length}:${state.lasers.length}:${[...state.generatedChunks].join(';')}`;
+      }
+
+      function buildSnapshot() {
+        return {
+          type: 'S',
+          m: net.matchId,
+          t: Math.round(performance.now()),
+          ph: state.phase,
+          tl: r1(state.timeLeft),
+          w: state.endlessWave,
+          s: state.snakes.map(packSnakeDyn)
+        };
+      }
+
+      function buildFullWorld() {
+        return {
+          type: 'WF',
+          m: net.matchId,
+          t: Math.round(performance.now()),
+          ph: state.phase,
           mode: state.mode,
-          timeLeft: state.timeLeft,
-          endlessWave: state.endlessWave,
-          snakes: state.snakes,
-          orbs: state.orbs,
-          powerups: state.powerups,
-          pillars: state.pillars,
-          iceZones: state.iceZones,
-          vortices: state.vortices,
-          lasers: state.lasers
+          tc: state.totalCompetitors,
+          tl: r1(state.timeLeft),
+          w: state.endlessWave,
+          sn: state.snakes.map(s => ({ n: s.name, tm: s.team, c: s.color, sk: s.skin, d: packSnakeDyn(s) })),
+          o: state.orbs.map(packOrb),
+          pw: packPowerups(),
+          hz: packHazards()
+        };
+      }
+
+      function resetNetBaseline() {
+        net.sentOrbs = new Set(state.orbs.map(o => o.id));
+        net.sentPwSig = state.powerups.map(p => p.id).join(',');
+        net.sentHzSig = hazardSignature();
+      }
+
+      /* Envia só o que mudou no mundo desde o último envio (canal confiável) */
+      function flushWorldDeltas() {
+        if (!state.isHost || !hasRemotePeers()) return;
+        const adds = [];
+        const cur = new Set();
+        for (let i = 0; i < state.orbs.length; i++) {
+          const o = state.orbs[i];
+          cur.add(o.id);
+          if (!net.sentOrbs.has(o.id)) adds.push(packOrb(o));
+        }
+        const rem = [];
+        net.sentOrbs.forEach((id) => { if (!cur.has(id)) rem.push(id); });
+        net.sentOrbs = cur;
+
+        const msg = { type: 'WD', m: net.matchId };
+        let any = false;
+        if (adds.length) { msg.oa = adds; any = true; }
+        if (rem.length) { msg.or = rem; any = true; }
+        const pwSig = state.powerups.map(p => p.id).join(',');
+        if (pwSig !== net.sentPwSig) { net.sentPwSig = pwSig; msg.pw = packPowerups(); any = true; }
+        const hzSig = hazardSignature();
+        if (hzSig !== net.sentHzSig) { net.sentHzSig = hzSig; msg.hz = packHazards(); any = true; }
+        if (any) sendNet(msg);
+      }
+
+      /* Estado completo (início de partida, convidado entrando, fim de rodada) */
+      function broadcastFullWorld() {
+        if (!state.isHost || !hasRemotePeers()) return;
+        flushWorldDeltas();
+        resetNetBaseline();
+        sendNet(buildFullWorld());
+      }
+
+      /* ---------- Convidado: aplicação do estado recebido ---------- */
+      function unpackOrb(a) {
+        const bonus = !!a[4];
+        return {
+          id: a[0], x: a[1], y: a[2], value: a[3], bonus,
+          r: bonus ? 8.5 : 5.2,
+          color: safeColor(a[5], '#38bdf8'),
+          pulse: Math.random() * Math.PI * 2,
+          hideUntil: 0
+        };
+      }
+
+      function unpackPowerups(list) {
+        if (!Array.isArray(list)) return state.powerups;
+        return list.map(a => {
+          const spec = POWERUP_TYPES.find(p => p.kind === a[3]) || POWERUP_TYPES[0];
+          const old = state.powerups.find(p => p.id === a[0]);
+          return {
+            id: a[0], x: a[1], y: a[2],
+            kind: spec.kind, icon: spec.icon, name: spec.name, color: spec.color,
+            r: 16,
+            pulse: old ? old.pulse : Math.random() * Math.PI * 2
+          };
         });
+      }
+
+      function applyHazards(hz) {
+        if (!hz) return;
+        state.pillars = (hz.p || []).map(a => ({ x: a[0], y: a[1], r: a[2] }));
+        state.iceZones = (hz.i || []).map(a => ({ x: a[0], y: a[1], r: a[2] }));
+        state.vortices = (hz.v || []).map(a => ({ x: a[0], y: a[1], r: a[2], strength: a[3] }));
+        state.lasers = (hz.l || []).map(a => ({ x1: a[0], y1: a[1], x2: a[2], y2: a[3], phase: a[4], active: false, warning: false }));
+      }
+
+      /* Corpo reto atrás da cabeça (nascimento / reposicionamento) */
+      function rebuildSnakeBody(s) {
+        const count = Math.max(2, Math.min(MAX_VISUAL_SEGMENTS, Math.floor(s.length)));
+        s.segments = [];
+        for (let i = 0; i < count; i++) {
+          s.segments.push({ x: s.x - Math.cos(s.angle) * i * 7.2, y: s.y - Math.sin(s.angle) * i * 7.2 });
+        }
+        s.minX = s.x - 140;
+        s.maxX = s.x + 140;
+        s.minY = s.y - 140;
+        s.maxY = s.y + 140;
+      }
+
+      function isLocallyPredicted(s) {
+        return !state.isHost && s && s.id === state.localSlot && !s.isBot;
+      }
+
+      function spawnDeathBurst(s) {
+        for (let i = 0; i < 16; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const sp = 60 + Math.random() * 190;
+          spawnParticle(s.x, s.y, Math.cos(a) * sp, Math.sin(a) * sp, s.color, 0.55);
+        }
+      }
+
+      function applySnakeDyn(s, d, hostT, forceSnap) {
+        const flags = d[1];
+        const aliveNow = !!(flags & 1);
+        s.isBot = !!(flags & 4);
+        s.length = d[5];
+        s.score = d[6];
+        s.shieldTimer = d[7];
+        s.magnetTimer = d[8];
+        s.overdriveTimer = d[9];
+        s.ghostTimer = d[10];
+        s.frozenTimer = d[11];
+        s.respawnTimer = d[12];
+        const epoch = d[13];
+
+        if (isLocallyPredicted(s)) {
+          // Cobra do próprio convidado: posição vem da predição local
+          if (!aliveNow) {
+            if (s.alive) {
+              s.alive = false;
+              spawnDeathBurst(s);
+              sfx.crash();
+            }
+            s.epoch = epoch;
+            return;
+          }
+          const diverged = Math.hypot(d[2] - s.x, d[3] - s.y) > NET.SNAP_DIST;
+          if (forceSnap || !s.alive || epoch !== s.epoch || diverged) {
+            s.alive = true;
+            s.epoch = epoch;
+            s.x = d[2];
+            s.y = d[3];
+            s.angle = d[4];
+            s.targetAngle = d[4];
+            rebuildSnakeBody(s);
+          }
+          return;
+        }
+
+        // Cobras remotas: guarda amostra para interpolar
+        s.boosting = !!(flags & 2);
+        const buf = net.snapBuf[s.id] || (net.snapBuf[s.id] = []);
+        buf.push({ t: hostT, x: d[2], y: d[3], a: d[4], alive: aliveNow, epoch });
+        if (buf.length > 40) buf.splice(0, buf.length - 40);
+        if (forceSnap) {
+          s.alive = aliveNow;
+          s.epoch = epoch;
+          s.x = d[2];
+          s.y = d[3];
+          s.angle = d[4];
+          rebuildSnakeBody(s);
+        }
+      }
+
+      function applyRemotePhase(ph) {
+        if (ph !== 'playing' && ph !== 'gameover') return;
+        const prevPhase = state.phase;
+        state.phase = ph;
+        if (ph === 'playing' && prevPhase !== 'playing') {
+          resetInputState();
+          document.getElementById('lobby-screen').classList.add('hidden');
+          document.getElementById('modal-gameover').classList.add('hidden');
+          document.getElementById('respawn-banner').classList.add('hidden');
+          document.getElementById('hud-overlay').classList.remove('hidden');
+          applyHudModeLayout();
+        } else if (ph === 'gameover' && prevPhase !== 'gameover') {
+          openGameOverModal();
+        }
+      }
+
+      function applyFullWorld(msg) {
+        if (!Array.isArray(msg.sn)) return;
+        const newMatch = msg.m !== net.matchId || state.snakes.length === 0;
+        net.matchId = msg.m;
+        net.lastFullT = Number(msg.t) || 0;
+        if (VALID_MODES.includes(msg.mode)) state.mode = msg.mode;
+        state.totalCompetitors = Math.max(2, Math.min(6, Number(msg.tc) || 6));
+        state.timeLeft = Number(msg.tl) || 0;
+        state.endlessWave = Number(msg.w) || 1;
+        if (newMatch) {
+          net.snapBuf = {};
+          net.clockOffset = null;
+          net.lastSnapT = 0;
+          state.snakes = [];
+          state.shockwaves = [];
+          state.particles = [];
+        }
+
+        const nextSnakes = [];
+        msg.sn.forEach((st, idx) => {
+          const d = st.d;
+          if (!Array.isArray(d) || d[0] !== idx) return;
+          const skin = SKINS.some(sk => sk.id === st.sk) ? st.sk : 'viper';
+          let s = state.snakes[idx];
+          if (!s) s = createSnakeEntity(idx, String(st.n || '').slice(0, 24), st.tm || null, !!(d[1] & 4), safeColor(st.c, '#22d3ee'), skin);
+          s.name = String(st.n || '').slice(0, 24);
+          s.team = st.tm || null;
+          s.color = safeColor(st.c, s.color);
+          s.skin = skin;
+          s.isBot = !!(d[1] & 4);
+          const snap = newMatch || !s.segments || s.segments.length === 0;
+          applySnakeDyn(s, d, Number(msg.t) || 0, snap);
+          nextSnakes.push(s);
+        });
+        state.snakes = nextSnakes;
+
+        const prevHidden = new Map(state.orbs.map(o => [o.id, o.hideUntil]));
+        state.orbs = Array.isArray(msg.o) ? msg.o.map(a => {
+          const o = unpackOrb(a);
+          o.hideUntil = prevHidden.get(o.id) || 0;
+          return o;
+        }) : [];
+        state.powerups = unpackPowerups(msg.pw);
+        applyHazards(msg.hz);
+        applyRemotePhase(msg.ph);
+      }
+
+      function applyWorldDelta(msg) {
+        if (msg.m !== net.matchId) return;
+        if (Array.isArray(msg.or) && msg.or.length) {
+          const gone = new Set(msg.or);
+          state.orbs = state.orbs.filter(o => !gone.has(o.id));
+        }
+        if (Array.isArray(msg.oa) && msg.oa.length) {
+          const have = new Set(state.orbs.map(o => o.id));
+          msg.oa.forEach(a => { if (Array.isArray(a) && !have.has(a[0])) state.orbs.push(unpackOrb(a)); });
+        }
+        if (msg.pw) state.powerups = unpackPowerups(msg.pw);
+        if (msg.hz) applyHazards(msg.hz);
+      }
+
+      function applySnapshot(msg) {
+        // Sem mundo carregado (voltou ao lobby): espera o próximo estado completo
+        if (msg.m !== net.matchId || !Array.isArray(msg.s) || state.snakes.length === 0) return;
+        const t = Number(msg.t) || 0;
+        // Pacotes fora de ordem ou anteriores ao último estado completo são ignorados
+        if (t <= net.lastSnapT || t < net.lastFullT) return;
+        net.lastSnapT = t;
+
+        // Relógio do anfitrião: menor atraso observado, com deriva lenta para cima
+        const sample = performance.now() - t;
+        if (net.clockOffset === null || sample < net.clockOffset) net.clockOffset = sample;
+        else net.clockOffset += (sample - net.clockOffset) * 0.02;
+
+        state.timeLeft = Number(msg.tl) || 0;
+        state.endlessWave = Number(msg.w) || 1;
+        msg.s.forEach((d) => {
+          if (!Array.isArray(d)) return;
+          const s = state.snakes[d[0]];
+          if (s) applySnakeDyn(s, d, t, false);
+        });
+        // Fim de rodada chega pelo canal confiável; snapshot atrasado não reabre a partida
+        if (state.phase !== 'gameover') applyRemotePhase(msg.ph);
+      }
+
+      /* Tempo do anfitrião (ms) estimado no relógio local */
+      function hostNowMs() {
+        return performance.now() - (net.clockOffset || 0);
+      }
+
+      /* Interpola as cobras remotas ~70 ms no passado (movimento liso mesmo com perda) */
+      function interpolateRemoteSnakes() {
+        const renderT = hostNowMs() - NET.INTERP_MS;
+        for (let i = 0; i < state.snakes.length; i++) {
+          const s = state.snakes[i];
+          if (isLocallyPredicted(s)) continue;
+          const buf = net.snapBuf[s.id];
+          if (!buf || buf.length === 0) continue;
+
+          while (buf.length >= 2 && buf[1].t <= renderT) buf.shift();
+          const a = buf[0];
+          const b = buf[1];
+          let x = a.x;
+          let y = a.y;
+          let ang = a.a;
+          if (b && renderT > a.t && a.epoch === b.epoch && a.alive === b.alive) {
+            const k = Math.min(1, (renderT - a.t) / Math.max(1, b.t - a.t));
+            x = a.x + (b.x - a.x) * k;
+            y = a.y + (b.y - a.y) * k;
+            ang = a.a + normalizeAngle(b.a - a.a) * k;
+          } else if (!b && a.alive && renderT > a.t) {
+            // Sem snapshot novo: segue em frente por pouco tempo
+            const ahead = Math.min(NET.MAX_EXTRAP_MS, renderT - a.t) / 1000;
+            const sp = snakeSpeedInfo(s).speed;
+            x = a.x + Math.cos(a.a) * sp * ahead;
+            y = a.y + Math.sin(a.a) * sp * ahead;
+          }
+
+          if (!a.alive) {
+            if (s.alive) {
+              s.alive = false;
+              spawnDeathBurst(s);
+            }
+            s.epoch = a.epoch;
+            continue;
+          }
+          if (!s.alive || s.epoch !== a.epoch) {
+            s.alive = true;
+            s.epoch = a.epoch;
+            s.x = x;
+            s.y = y;
+            s.angle = ang;
+            rebuildSnakeBody(s);
+            continue;
+          }
+          const moved = Math.abs(x - s.x) + Math.abs(y - s.y) > 0.01;
+          s.x = x;
+          s.y = y;
+          s.angle = ang;
+          if (moved) updateSnakeTrail(s);
+        }
+      }
+
+      /* Convidado: simula a própria cobra sem esperar o anfitrião */
+      function predictLocalSnake(s, dt) {
+        if (s.shieldTimer > 0) s.shieldTimer -= dt;
+        if (s.magnetTimer > 0) s.magnetTimer -= dt;
+        if (s.overdriveTimer > 0) s.overdriveTimer -= dt;
+        if (s.ghostTimer > 0) s.ghostTimer -= dt;
+        if (s.frozenTimer > 0) s.frozenTimer -= dt;
+        applyVortexPull(s, dt);
+        moveSnakeHead(s, dt);
+        updateSnakeTrail(s);
+
+        // Orbe comido some na hora; o anfitrião confirma (senão reaparece)
+        const now = performance.now();
+        const eatRadius = s.magnetTimer > 0 ? 105 : 23;
+        for (let i = 0; i < state.orbs.length; i++) {
+          const o = state.orbs[i];
+          if (o.hideUntil > now) continue;
+          if (Math.hypot(o.x - s.x, o.y - s.y) < eatRadius) {
+            o.hideUntil = now + 700;
+            sfx.eat(o.bonus);
+          }
+        }
+      }
+
+      function guestNetworkStep(dt, nowSec) {
+        if (!state.hostConnected) return;
+        const now = performance.now();
+
+        // Lasers no relógio do anfitrião
+        const hostSec = hostNowMs() / 1000;
+        for (let i = 0; i < state.lasers.length; i++) {
+          const lz = state.lasers[i];
+          const cycle = (((hostSec + lz.phase) % 5.0) + 5.0) % 5.0;
+          lz.warning = cycle >= 2.3 && cycle < 3.5;
+          lz.active = cycle >= 3.5;
+        }
+
+        const me = state.snakes[state.localSlot];
+        if (isLocallyPredicted(me) && me.alive) predictLocalSnake(me, dt);
+
+        if (me && !me.isBot && now - net.lastInputAt >= NET.INPUT_MIN_MS) {
+          net.lastInputAt = now;
+          sendFast({
+            type: 'I',
+            x: r1(me.x),
+            y: r1(me.y),
+            a: r3(me.angle),
+            ta: r3(me.targetAngle),
+            b: me.boosting ? 1 : 0,
+            e: me.epoch || 0,
+            r: Math.round(net.rtt)
+          });
+        }
+
+        interpolateRemoteSnakes();
+
+        // Aviso de renascimento do convidado
+        const banner = document.getElementById('respawn-banner');
+        if (me && !me.isBot && !me.alive && state.phase === 'playing') {
+          if (banner.classList.contains('hidden')) {
+            document.getElementById('respawn-reason').textContent = 'Você foi eliminado!';
+            banner.classList.remove('hidden');
+          }
+          document.getElementById('respawn-countdown').textContent = Math.max(1, Math.ceil(me.respawnTimer));
+        } else if (!banner.classList.contains('hidden')) {
+          banner.classList.add('hidden');
+        }
+      }
+
+      /* Anfitrião: aplica o comando do convidado (posição autoritativa do próprio convidado) */
+      function reconcileRemoteHead(s, speed, dt) {
+        const np = s.netPos;
+        if (!np || np.e !== (s.epoch || 0)) return;
+        // Posição relatada + o que o convidado andou desde então (meia volta + idade local)
+        const age = Math.min(0.25, (performance.now() - np.at) / 1000 + np.ow / 1000);
+        const tx = np.x + Math.cos(np.a) * speed * age;
+        const ty = np.y + Math.sin(np.a) * speed * age;
+        const dx = tx - s.x;
+        const dy = ty - s.y;
+        if (Math.hypot(dx, dy) > 260) {
+          s.x = tx;
+          s.y = ty;
+        } else {
+          const k = Math.min(1, dt * 14);
+          s.x += dx * k;
+          s.y += dy * k;
+        }
+      }
+
+      /* Anfitrião: histórico curto dos corpos para julgar colisões do convidado
+         no instante que ele realmente viu (compensação de atraso) */
+      function recordLagHistory() {
+        const now = performance.now();
+        net.history.push({
+          t: now,
+          segs: state.snakes.map(s => {
+            if (!s.alive) return null;
+            const arr = new Float32Array(s.segments.length * 2);
+            for (let i = 0; i < s.segments.length; i++) {
+              arr[i * 2] = s.segments[i].x;
+              arr[i * 2 + 1] = s.segments[i].y;
+            }
+            return arr;
+          })
+        });
+        while (net.history.length && net.history[0].t < now - NET.REWIND_CAP_MS - 50) net.history.shift();
+      }
+
+      function rewoundSegments(defenderIdx, rewindMs) {
+        if (rewindMs <= 0 || net.history.length === 0) return null;
+        const target = performance.now() - rewindMs;
+        let best = null;
+        for (let i = net.history.length - 1; i >= 0; i--) {
+          if (net.history[i].t <= target) { best = net.history[i]; break; }
+        }
+        if (!best) best = net.history[0];
+        return best.segs[defenderIdx] || null;
       }
 
       function removeRemotePeer(senderId) {
@@ -1668,6 +2232,7 @@
           snake.isBot = true;
           snake.boosting = false;
           snake.aiTimer = 0;
+          snake.netPos = null;
         }
         updatePeersBadge();
         showToast(`${info.name} saiu da sala.`);
@@ -1683,11 +2248,16 @@
         if (state.isHost && state.remotePeers[msg.sender]) {
           state.remotePeers[msg.sender].lastSeen = now;
         }
-        if (!state.isHost && (msg.type === 'ASSIGN_SLOT' || msg.type === 'WORLD_SNAPSHOT' || msg.type === 'HOST_PING')) {
+        if (!state.isHost && ['ASSIGN_SLOT', 'S', 'WF', 'WD', 'HOST_PING', 'PO'].includes(msg.type)) {
           state.lastHostMsgAt = now;
         }
 
         if (msg.type === 'HELLO_PEER' && state.isHost) {
+          if (msg.proto !== NET_PROTO) {
+            // Versão antiga do jogo: protocolo incompatível
+            sendNet({ type: 'OUTDATED', targetSender: msg.sender });
+            return;
+          }
           if (!state.remotePeers[msg.sender]) {
             const usedSlots = new Set(Object.values(state.remotePeers).map(p => p.slot));
             let slot = 1;
@@ -1720,11 +2290,20 @@
             targetSender: msg.sender,
             slot: state.remotePeers[msg.sender].slot,
             mode: state.mode,
-            totalCompetitors: state.totalCompetitors
+            totalCompetitors: state.totalCompetitors,
+            proto: NET_PROTO
           });
+          // Entrou no meio da partida: recebe o mundo atual
+          if (state.phase === 'playing') broadcastFullWorld();
         } else if (msg.type === 'ROOM_FULL' && msg.targetSender === tabId && !state.isHost) {
           fallbackToOwnRoom('Sala cheia (6/6). Criamos uma sala nova para você.');
+        } else if (msg.type === 'OUTDATED' && msg.targetSender === tabId && !state.isHost) {
+          fallbackToOwnRoom('Versão do jogo diferente do anfitrião. Recarreguem a página e tentem de novo.');
         } else if (msg.type === 'ASSIGN_SLOT' && msg.targetSender === tabId && !state.isHost) {
+          if (msg.proto !== NET_PROTO) {
+            fallbackToOwnRoom('Versão do jogo diferente do anfitrião. Recarreguem a página e tentem de novo.');
+            return;
+          }
           clearTimeout(joinTimeoutId);
           const wasConnected = state.hostConnected;
           state.hostConnected = true;
@@ -1734,36 +2313,36 @@
           refreshLobbyUI();
           updatePeersBadge();
           if (!wasConnected) showToast(`Conectado na sala ${state.roomCode}! Aguarde o anfitrião iniciar.`);
-        } else if (msg.type === 'PEER_INPUT' && state.isHost) {
+        } else if (msg.type === 'I' && state.isHost) {
           const info = state.remotePeers[msg.sender];
           const snake = info && state.snakes[info.slot];
-          if (snake && !snake.isBot && Number.isFinite(msg.angle)) {
-            snake.targetAngle = msg.angle;
-            snake.boosting = !!msg.boosting;
+          if (info && Number.isFinite(msg.r)) info.rtt = Math.max(0, Math.min(2000, msg.r));
+          if (snake && !snake.isBot) {
+            if (Number.isFinite(msg.ta)) snake.targetAngle = msg.ta;
+            snake.boosting = !!msg.b;
+            if (snake.alive && Number.isFinite(msg.x) && Number.isFinite(msg.y) && Number.isFinite(msg.a) && msg.e === (snake.epoch || 0)) {
+              const ow = Math.min(NET.REWIND_CAP_MS, ((info && info.rtt) || 0) / 2);
+              snake.netPos = { x: msg.x, y: msg.y, a: msg.a, e: msg.e, ow, at: now };
+              // Ângulo do convidado, avançado pela meia volta da rede
+              const turnRate = snake.frozenTimer > 0 ? 2.1 : (snake.boosting ? 3.5 : 4.3);
+              snake.angle = turnTowards(msg.a, snake.targetAngle, turnRate * ow / 1000);
+            }
           }
-        } else if (msg.type === 'WORLD_SNAPSHOT' && !state.isHost && state.hostConnected) {
-          if (!Array.isArray(msg.snakes)) return;
-          const prevPhase = state.phase;
-          state.phase = msg.phase;
-          if (VALID_MODES.includes(msg.mode)) state.mode = msg.mode;
-          state.timeLeft = Number(msg.timeLeft) || 0;
-          state.endlessWave = Number(msg.endlessWave) || 1;
-          state.snakes = msg.snakes;
-          state.orbs = Array.isArray(msg.orbs) ? msg.orbs : [];
-          state.powerups = Array.isArray(msg.powerups) ? msg.powerups : [];
-          state.pillars = Array.isArray(msg.pillars) ? msg.pillars : [];
-          state.iceZones = Array.isArray(msg.iceZones) ? msg.iceZones : [];
-          state.vortices = Array.isArray(msg.vortices) ? msg.vortices : [];
-          state.lasers = Array.isArray(msg.lasers) ? msg.lasers : [];
-          if (state.phase === 'playing' && prevPhase !== 'playing') {
-            resetInputState();
-            document.getElementById('lobby-screen').classList.add('hidden');
-            document.getElementById('modal-gameover').classList.add('hidden');
-            document.getElementById('hud-overlay').classList.remove('hidden');
-            applyHudModeLayout();
-          } else if (state.phase === 'gameover' && prevPhase !== 'gameover') {
-            openGameOverModal();
+        } else if (msg.type === 'PI' && state.isHost) {
+          sendFast({ type: 'PO', c: msg.c, targetSender: msg.sender });
+        } else if (msg.type === 'PO' && !state.isHost && msg.targetSender === tabId) {
+          const sample = performance.now() - Number(msg.c);
+          if (Number.isFinite(sample) && sample >= 0 && sample < 5000) {
+            net.rtt = net.rtt ? net.rtt + (sample - net.rtt) * 0.3 : sample;
           }
+        } else if (msg.type === 'WF' && !state.isHost && state.hostConnected) {
+          applyFullWorld(msg);
+        } else if (msg.type === 'WD' && !state.isHost && state.hostConnected) {
+          applyWorldDelta(msg);
+        } else if (msg.type === 'S' && !state.isHost && state.hostConnected) {
+          applySnapshot(msg);
+        } else if (msg.type === 'LOBBY' && !state.isHost && state.hostConnected) {
+          if (state.phase !== 'lobby') returnToLobby();
         }
       }
 
@@ -1790,11 +2369,34 @@
           });
         } else if (state.hostConnected) {
           sendNet({ type: 'PEER_PING' });
+          sendFast({ type: 'PI', c: Math.round(now) });
+          net.statsTick = (net.statsTick + 1) % 5;
+          if (net.statsTick === 0) detectRelay();
           if (now - state.lastHostMsgAt > 8000) {
             fallbackToOwnRoom('O anfitrião saiu. Criamos uma sala nova para você.');
           }
         }
       }, 1000);
+
+      /* Conexão passando por servidor TURN (relay) soma muita latência: avisa no HUD */
+      async function detectRelay() {
+        const conn = peerConns.find(c => c.open && c.peerConnection);
+        if (!conn) return;
+        try {
+          const stats = await conn.peerConnection.getStats();
+          let pair = null;
+          stats.forEach((r) => {
+            if (r.type === 'transport' && r.selectedCandidatePairId) pair = stats.get(r.selectedCandidatePairId) || pair;
+          });
+          if (!pair) {
+            stats.forEach((r) => { if (r.type === 'candidate-pair' && r.nominated && r.state === 'succeeded') pair = r; });
+          }
+          if (!pair) return;
+          const l = stats.get(pair.localCandidateId);
+          const rm = stats.get(pair.remoteCandidateId);
+          net.relay = !!((l && l.candidateType === 'relay') || (rm && rm.candidateType === 'relay'));
+        } catch (_) {}
+      }
 
       /* -----------------------------------------------------------------------
          6. GERADOR PROCEDURAL DE SETORES (MUNDO INFINITO) & ARENA COMPETITIVA
@@ -2118,7 +2720,9 @@
           overdriveTimer: 0,
           ghostTimer: 0,
           frozenTimer: 0,
-          aiTimer: 0
+          aiTimer: 0,
+          epoch: 0,
+          netPos: null
         };
       }
 
@@ -2142,6 +2746,7 @@
         }
 
         state.orbs.push({
+          id: ++net.orbSeq,
           x: ox,
           y: oy,
           value,
@@ -2156,6 +2761,7 @@
         if (state.powerups.length >= 8) return;
         const spec = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
         state.powerups.push({
+          id: ++net.pwSeq,
           x: px,
           y: py,
           kind: spec.kind,
@@ -2275,6 +2881,16 @@
         document.getElementById('hud-overlay').classList.remove('hidden');
         applyHudModeLayout();
         updateHUD();
+
+        // Nova partida: convidados recebem o mundo completo pelo canal confiável
+        net.matchId++;
+        net.history = [];
+        syncTick = 0;
+        net.deltaTick = 0;
+        if (hasRemotePeers()) {
+          resetNetBaseline();
+          sendNet(buildFullWorld());
+        }
       }
 
       /* Ajusta HUD conforme o modo (usado pelo anfitrião e pelos convidados) */
@@ -2575,6 +3191,8 @@
         const initLen = 15 + waveBonusLen;
 
         snake.alive = true;
+        snake.epoch = (snake.epoch || 0) + 1;
+        snake.netPos = null;
         snake.x = pos.x;
         snake.y = pos.y;
         snake.minX = pos.x - 140;
@@ -2608,7 +3226,75 @@
       let uiTick = 0;
       let streamTick = 0;
 
-      let inputSendTick = 0;
+      /* ---------- Movimento compartilhado (anfitrião simula; convidado prevê) ---------- */
+      const SEGMENT_SPACING = 7.2;
+      const BASE_SPEED = 215;
+
+      function snakeSpeedInfo(s) {
+        const isFrozen = s.frozenTimer > 0;
+        const hasOverdrive = s.overdriveTimer > 0;
+        const isBoosting = !isFrozen && (hasOverdrive || (s.boosting && s.length > 12));
+        let speed = BASE_SPEED;
+        if (isFrozen) speed *= 0.45;
+        else if (hasOverdrive) speed *= 1.75;
+        else if (isBoosting) speed *= 1.6;
+        return { isFrozen, hasOverdrive, isBoosting, speed };
+      }
+
+      function applyVortexPull(s, dt) {
+        for (let i = 0; i < state.vortices.length; i++) {
+          const vx = state.vortices[i];
+          const dx = vx.x - s.x;
+          const dy = vx.y - s.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist > 14 && dist < vx.r) {
+            const pull = (1 - dist / vx.r) * vx.strength * dt;
+            s.x += (dx / dist) * pull;
+            s.y += (dy / dist) * pull;
+          }
+        }
+      }
+
+      function moveSnakeHead(s, dt) {
+        const info = snakeSpeedInfo(s);
+        const diffMult = s.isBot ? DIFFICULTY_CFG[state.botDifficulty].turnMult : 1.0;
+        const turnRate = (info.isFrozen ? 2.1 : (info.isBoosting ? 3.5 : 4.3)) * diffMult;
+        s.angle = turnTowards(s.angle, s.targetAngle, turnRate * dt);
+        s.x += Math.cos(s.angle) * info.speed * dt;
+        s.y += Math.sin(s.angle) * info.speed * dt;
+        return info;
+      }
+
+      function updateSnakeTrail(s) {
+        s.segments.unshift({ x: s.x, y: s.y });
+        let minX = s.x, maxX = s.x, minY = s.y, maxY = s.y;
+
+        for (let i = 1; i < s.segments.length; i++) {
+          const prev = s.segments[i - 1];
+          const curr = s.segments[i];
+          const dx = curr.x - prev.x;
+          const dy = curr.y - prev.y;
+          const d = Math.hypot(dx, dy);
+          if (d > SEGMENT_SPACING) {
+            curr.x = prev.x + (dx / d) * SEGMENT_SPACING;
+            curr.y = prev.y + (dy / d) * SEGMENT_SPACING;
+          }
+          if (curr.x < minX) minX = curr.x;
+          if (curr.x > maxX) maxX = curr.x;
+          if (curr.y < minY) minY = curr.y;
+          if (curr.y > maxY) maxY = curr.y;
+        }
+
+        s.minX = minX;
+        s.maxX = maxX;
+        s.minY = minY;
+        s.maxY = maxY;
+
+        const targetSegCount = Math.min(MAX_VISUAL_SEGMENTS, Math.floor(s.length));
+        if (s.segments.length > targetSegCount) {
+          s.segments.length = targetSegCount;
+        }
+      }
 
       function updateArenaSimulation(dt, nowSec) {
         if (state.paused) return;
@@ -2642,16 +3328,11 @@
             localSnake.targetAngle = state.input.targetAngle;
           }
           localSnake.boosting = (isBoostInputActive() || localSnake.overdriveTimer > 0) && (localSnake.length > 12 || localSnake.overdriveTimer > 0);
-
-          // Convidado: envia comandos ~20x/s em vez de a cada frame
-          inputSendTick += dt;
-          if (!state.isHost && inputSendTick >= 0.05) {
-            inputSendTick = 0;
-            sendNet({ type: 'PEER_INPUT', angle: localSnake.targetAngle, boosting: localSnake.boosting });
-          }
         }
 
         if (!state.isHost) {
+          // Convidado: prevê a própria cobra, envia comandos e interpola as demais
+          guestNetworkStep(dt, nowSec);
           uiTick += dt;
           if (uiTick >= 0.2) {
             uiTick = 0;
@@ -2702,9 +3383,6 @@
           lz.active = cycle >= 3.5;
         }
 
-        const segmentSpacing = 7.2;
-        const baseSpeed = 215;
-
         for (let sIdx = 0; sIdx < state.snakes.length; sIdx++) {
           const s = state.snakes[sIdx];
           if (!s.alive) {
@@ -2738,37 +3416,16 @@
           }
 
           // Vórtices gravitacionais
-          for (let i = 0; i < state.vortices.length; i++) {
-            const vx = state.vortices[i];
-            const dx = vx.x - s.x;
-            const dy = vx.y - s.y;
-            const dist = Math.hypot(dx, dy);
-            if (dist > 14 && dist < vx.r) {
-              const pull = (1 - dist / vx.r) * vx.strength * dt;
-              s.x += (dx / dist) * pull;
-              s.y += (dy / dist) * pull;
-            }
-          }
+          applyVortexPull(s, dt);
 
           if (s.isBot) {
             computeBotSteering(s, dt);
           }
 
-          const isFrozen = s.frozenTimer > 0;
-          const hasOverdrive = s.overdriveTimer > 0;
-          const isBoosting = !isFrozen && (hasOverdrive || (s.boosting && s.length > 12));
+          const { isBoosting, hasOverdrive, speed } = moveSnakeHead(s, dt);
 
-          let speed = baseSpeed;
-          if (isFrozen) speed *= 0.45;
-          else if (hasOverdrive) speed *= 1.75;
-          else if (isBoosting) speed *= 1.6;
-
-          const diffMult = s.isBot ? DIFFICULTY_CFG[state.botDifficulty].turnMult : 1.0;
-          const turnRate = (isFrozen ? 2.1 : (isBoosting ? 3.5 : 4.3)) * diffMult;
-
-          s.angle = turnTowards(s.angle, s.targetAngle, turnRate * dt);
-          s.x += Math.cos(s.angle) * speed * dt;
-          s.y += Math.sin(s.angle) * speed * dt;
+          // Convidado: corrige para a posição que ele mesmo informou
+          if (!s.isBot && s.netPos) reconcileRemoteHead(s, speed, dt);
 
           if (isBoosting && !hasOverdrive) {
             s.length = Math.max(12, s.length - dt * 2.1);
@@ -2778,34 +3435,7 @@
             }
           }
 
-          s.segments.unshift({ x: s.x, y: s.y });
-          let minX = s.x, maxX = s.x, minY = s.y, maxY = s.y;
-
-          for (let i = 1; i < s.segments.length; i++) {
-            const prev = s.segments[i - 1];
-            const curr = s.segments[i];
-            const dx = curr.x - prev.x;
-            const dy = curr.y - prev.y;
-            const d = Math.hypot(dx, dy);
-            if (d > segmentSpacing) {
-              curr.x = prev.x + (dx / d) * segmentSpacing;
-              curr.y = prev.y + (dy / d) * segmentSpacing;
-            }
-            if (curr.x < minX) minX = curr.x;
-            if (curr.x > maxX) maxX = curr.x;
-            if (curr.y < minY) minY = curr.y;
-            if (curr.y > maxY) maxY = curr.y;
-          }
-
-          s.minX = minX;
-          s.maxX = maxX;
-          s.minY = minY;
-          s.maxY = maxY;
-
-          const targetSegCount = Math.min(MAX_VISUAL_SEGMENTS, Math.floor(s.length));
-          if (s.segments.length > targetSegCount) {
-            s.segments.length = targetSegCount;
-          }
+          updateSnakeTrail(s);
 
           const headR = 13;
           if (!infinite && (s.x < headR || s.x > ARENA_SIZE - headR || s.y < headR || s.y > ARENA_SIZE - headR)) {
@@ -2824,6 +3454,9 @@
                   s.targetAngle = s.angle;
                   s.x += Math.cos(s.angle) * 28;
                   s.y += Math.sin(s.angle) * 28;
+                  // Reposicionamento: o convidado passa a aceitar esta posição
+                  s.epoch = (s.epoch || 0) + 1;
+                  s.netPos = null;
                   if (s.id === state.localSlot) {
                     sfx.shieldBlock();
                     showToast('🛡️ Escudo absorveu o impacto!');
@@ -2886,25 +3519,36 @@
           }
         }
 
+        const lagComp = hasRemotePeers();
+        if (lagComp) recordLagHistory();
+
         for (let aIdx = 0; aIdx < state.snakes.length; aIdx++) {
           const attacker = state.snakes[aIdx];
           if (!attacker.alive || attacker.ghostTimer > 0) continue;
+          // Convidado viu os outros corpos no passado (rede + interpolação): julga nesse instante
+          const rewindMs = (lagComp && !attacker.isBot && attacker.netPos)
+            ? Math.min(NET.REWIND_CAP_MS, attacker.netPos.ow + NET.INTERP_MS)
+            : 0;
 
           for (let dIdx = 0; dIdx < state.snakes.length; dIdx++) {
             const defender = state.snakes[dIdx];
             if (!defender.alive || defender.id === attacker.id || defender.ghostTimer > 0) continue;
             if (attacker.team && defender.team === attacker.team) continue;
 
+            const past = rewindMs > 0 ? rewoundSegments(dIdx, rewindMs) : null;
+            const pad = past ? 120 : 20;
             if (
-              attacker.x < defender.minX - 20 ||
-              attacker.x > defender.maxX + 20 ||
-              attacker.y < defender.minY - 20 ||
-              attacker.y > defender.maxY + 20
+              attacker.x < defender.minX - pad ||
+              attacker.x > defender.maxX + pad ||
+              attacker.y < defender.minY - pad ||
+              attacker.y > defender.maxY + pad
             ) continue;
 
-            for (let idx = 2; idx < defender.segments.length; idx++) {
-              const seg = defender.segments[idx];
-              if (Math.hypot(attacker.x - seg.x, attacker.y - seg.y) < 17) {
+            const segCount = past ? past.length / 2 : defender.segments.length;
+            for (let idx = 2; idx < segCount; idx++) {
+              const segX = past ? past[idx * 2] : defender.segments[idx].x;
+              const segY = past ? past[idx * 2 + 1] : defender.segments[idx].y;
+              if (Math.hypot(attacker.x - segX, attacker.y - segY) < 17) {
                 if (attacker.shieldTimer > 0) {
                   attacker.shieldTimer = 0;
                   attacker.ghostTimer = 1.2;
@@ -2936,11 +3580,18 @@
           updateHUD();
         }
 
-        syncTick += dt;
         // Só sincroniza se houver convidados (antes enviava sempre, mesmo jogando sozinho)
-        if (syncTick >= 0.06 && hasRemotePeers()) {
-          syncTick = 0;
-          broadcastSnapshot();
+        if (hasRemotePeers()) {
+          net.deltaTick += dt;
+          if (net.deltaTick >= NET.DELTA_INTERVAL) {
+            net.deltaTick = 0;
+            flushWorldDeltas();
+          }
+          syncTick += dt;
+          if (syncTick >= NET.SNAP_INTERVAL) {
+            syncTick = 0;
+            sendFast(buildSnapshot());
+          }
         }
       }
 
@@ -2954,6 +3605,18 @@
           const mins = Math.floor(state.timeLeft / 60);
           const secs = Math.floor(state.timeLeft % 60);
           timerEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // Latência da sala (convidado: própria; anfitrião: pior convidado)
+        const netRow = document.getElementById('hud-net-row');
+        const online = state.isHost ? hasRemotePeers() : state.hostConnected;
+        netRow.classList.toggle('hidden', !online);
+        if (online) {
+          let rtt = net.rtt;
+          if (state.isHost) rtt = Math.max(0, ...Object.values(state.remotePeers).map(p => p.rtt || 0));
+          const netVal = document.getElementById('hud-net-val');
+          netVal.textContent = `${rtt ? Math.round(rtt) + ' ms' : '--'}${!state.isHost && net.relay ? ' · relay' : ''}`;
+          netVal.style.color = rtt > 180 ? '#f87171' : (rtt > 100 ? '#facc15' : '');
         }
 
         const me = state.snakes[state.localSlot];
@@ -3035,7 +3698,7 @@
           if (didLocalPlayerWin()) sfx.win();
           else sfx.lose();
         }
-        if (state.isHost && hasRemotePeers()) broadcastSnapshot();
+        if (state.isHost && hasRemotePeers()) broadcastFullWorld();
         openGameOverModal();
       }
 
@@ -3612,8 +4275,10 @@
         }
 
         // 7) Orbes
+        const orbNowMs = performance.now();
         for (let i = 0; i < state.orbs.length; i++) {
           const o = state.orbs[i];
+          if (o.hideUntil > orbNowMs) continue; // comido pela predição do convidado
           if (Math.abs(o.x - state.camera.x) > halfViewW || Math.abs(o.y - state.camera.y) > halfViewH) continue;
           if (isNokia) {
             const ox = Math.round(o.x / 4) * 4;
@@ -4203,6 +4868,7 @@
 
       function returnToLobby() {
         persistEndlessProgress();
+        if (state.isHost && hasRemotePeers() && state.phase !== 'lobby') sendNet({ type: 'LOBBY' });
         state.phase = 'lobby';
         state.paused = false;
         resetInputState();
@@ -4302,7 +4968,7 @@
         document.getElementById('modal-profile').classList.add('hidden');
         showToast(`Perfil salvo. Boa partida, ${profile.name}!`);
         if (!state.isHost) {
-          sendNet({ type: 'HELLO_PEER', name: state.playerName, skin: state.selectedSkin, color: state.selectedColor });
+          sendNet({ type: 'HELLO_PEER', proto: NET_PROTO, name: state.playerName, skin: state.selectedSkin, color: state.selectedColor });
         }
       }
 
