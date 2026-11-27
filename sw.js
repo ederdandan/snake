@@ -1,6 +1,6 @@
 /* Service Worker da Serpente Arena: permite instalar e jogar offline.
    Ao publicar uma nova versão, aumente CACHE_VERSION para renovar o cache. */
-const CACHE_VERSION = 'serpente-arena-v3';
+const CACHE_VERSION = 'serpente-arena-v4';
 const APP_SHELL = [
   './',
   './index.html',
@@ -25,6 +25,8 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Métricas (GoatCounter): sempre pela rede, nunca no cache.
+  if (/goatcounter\.com|gc\.zgo\.at/.test(event.request.url)) return;
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
